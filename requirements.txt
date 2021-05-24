@@ -1,0 +1,5 @@
+opencv_python==4.2.0.32
+numpy==1.19.2
+torch==1.7.1
+torchsummary==1.5.1
+tensorboardX==2.2
