@@ -13,8 +13,9 @@ class U_Net(nn.Module):
     Paper : https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, in_channels=3, out_channels=1, init_features=64):
+    def __init__(self, in_channels=3, out_channels=1, init_features=64,softmax_require=False):
         super(U_Net, self).__init__()
+        self.softmax_require=softmax_require
         self.out_channels = out_channels
 
         filters = [init_features, init_features * 2,
@@ -51,40 +52,30 @@ class U_Net(nn.Module):
     def forward(self, x):
 
         e1 = self.Conv1(x)
-
         e2 = self.Maxpool1(e1)
         e2 = self.Conv2(e2)
-
         e3 = self.Maxpool2(e2)
         e3 = self.Conv3(e3)
-
         e4 = self.Maxpool3(e3)
         e4 = self.Conv4(e4)
-
         e5 = self.Maxpool4(e4)
         e5 = self.Conv5(e5)
-
         d5 = self.Up5(e5)
         d5 = torch.cat((e4, d5), dim=1)
-
         d5 = self.Up_conv5(d5)
-
         d4 = self.Up4(d5)
         d4 = torch.cat((e3, d4), dim=1)
         d4 = self.Up_conv4(d4)
-
         d3 = self.Up3(d4)
         d3 = torch.cat((e2, d3), dim=1)
         d3 = self.Up_conv3(d3)
-
         d2 = self.Up2(d3)
         d2 = torch.cat((e1, d2), dim=1)
         d2 = self.Up_conv2(d2)
-
         out = self.Conv(d2)
 
         #d1 = self.active(out)
-        if self.out_channels > 1:
+        if self.out_channels > 1 and self.softmax_require==True:
             return nn.Softmax(dim=1)(out)
         else:
             return out
@@ -96,9 +87,10 @@ class R2U_Net(nn.Module):
     Paper: https://arxiv.org/abs/1802.06955
     """
 
-    def __init__(self, in_channels=3, out_channels=1, init_features=64, t=2):
+    def __init__(self, in_channels=3, out_channels=1, init_features=64, t=2,softmax_require=False):
         super(R2U_Net, self).__init__()
         self.out_channels = out_channels
+        self.softmax_require=softmax_require
 
         filters = [init_features, init_features * 2,
                    init_features * 4, init_features * 8, init_features * 16]
@@ -173,7 +165,7 @@ class R2U_Net(nn.Module):
 
       # out = self.active(out)
 
-        if self.out_channels > 1:
+        if self.out_channels > 1 and self.softmax_require==True:
             return nn.Softmax(dim=1)(out)
         else:
             return out
@@ -185,9 +177,10 @@ class AttU_Net(nn.Module):
     Paper: https://arxiv.org/abs/1804.03999
     """
 
-    def __init__(self, in_channels=3, out_channels=1, init_features=64):
+    def __init__(self, in_channels=3, out_channels=1, init_features=64,softmax_require=False):
         super(AttU_Net, self).__init__()
         self.out_channels = out_channels
+        self.softmax_require=softmax_require
 
         filters = [init_features, init_features * 2,
                    init_features * 4, init_features * 8, init_features * 16]
@@ -269,7 +262,7 @@ class AttU_Net(nn.Module):
 
       #  out = self.active(out)
 
-        if self.out_channels > 1:
+        if self.out_channels > 1 and self.softmax_require==True:
             return nn.Softmax(dim=1)(out)
         else:
             return out
@@ -281,9 +274,10 @@ class R2AttU_Net(nn.Module):
     Implementation : https://github.com/LeeJunHyun/Image_Segmentation
     """
 
-    def __init__(self, in_channels=3, out_channels=1, init_features=64, t=2):
+    def __init__(self, in_channels=3, out_channels=1, init_features=64, t=2,softmax_require=False):
         super(R2AttU_Net, self).__init__()
         self.out_channels = out_channels
+        self.softmax_require=softmax_require
 
         filters = [init_features, init_features * 2,
                    init_features * 4, init_features * 8, init_features * 16]
@@ -363,7 +357,7 @@ class R2AttU_Net(nn.Module):
 
       #  out = self.active(out)
 
-        if self.out_channels > 1:
+        if self.out_channels > 1 and self.softmax_require==True:
             return nn.Softmax(dim=1)(out)
         else:
             return out
@@ -377,10 +371,11 @@ class NestedUNet(nn.Module):
     https://arxiv.org/pdf/1807.10165.pdf
     """
 
-    def __init__(self, in_channels=3, out_channels=1, init_features=64):
+    def __init__(self, in_channels=3, out_channels=1, init_features=64,softmax_require=False):
         super(NestedUNet, self).__init__()
 
         self.out_channels = out_channels
+        self.softmax_require=softmax_require
         filters = [init_features, init_features * 2,
                    init_features * 4, init_features * 8, init_features * 16]
 
@@ -442,11 +437,11 @@ class NestedUNet(nn.Module):
         x0_4 = self.conv0_4(
             torch.cat([x0_0, x0_1, x0_2, x0_3, self.Up(x1_3)], 1))
 
-        output = self.final(x0_4)
-        if self.out_channels > 1:
-            return nn.Softmax(dim=1)(output)
+        out = self.final(x0_4)
+        if self.out_channels > 1 and self.softmax_require==True:
+            return nn.Softmax(dim=1)(out)
         else:
-            return output
+            return out
 
 # Dictioary Unet
 # if required for getting the filters and model parameters for each step
@@ -455,10 +450,12 @@ class NestedUNet(nn.Module):
 class Unet_dict(nn.Module):
     """Unet which operates with filters dictionary values"""
 
-    def __init__(self,in_channels=1, out_channels=3, n_filters=32, p_dropout=0.5, batchnorm=True):
+    def __init__(self,in_channels=1, out_channels=3, n_filters=32, p_dropout=0.5, batchnorm=True,softmax_require=False):
         super(Unet_dict, self).__init__()
         filters_dict = {}
         filt_pair = [in_channels, n_filters]
+        self.softmax_require=softmax_require
+        self.out_channels = out_channels
 
         for i in range(4):
             self.add_module('contractive_' + str(i),
@@ -494,7 +491,12 @@ class Unet_dict(nn.Module):
         u2 = F.relu(self.expansive_2(u3, c22))
         u1 = F.relu(self.expansive_1(u2, c11))
         u0 = F.relu(self.expansive_0(u1, c00))
-        return F.softmax(self.output(u0), dim=1)
+        out=self.output(u0)
+
+        if self.out_channels > 1 and self.softmax_require==True:
+            return nn.Softmax(dim=1)(out)
+        else:
+            return out
 
 
 def main():
@@ -508,7 +510,7 @@ def main():
     print('='*20)
     print('U_Net')
     model = U_Net(1, 3).to(device)
-    x = torch.rand(1, 1, 512, 512) 
+    x = torch.rand(1, 1, 512, 512)
     x = x.to(device)
     y = model.forward(x)
     print(x.shape, y.shape)

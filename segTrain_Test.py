@@ -11,7 +11,7 @@ import torch.optim as optim
 from tqdm import tqdm
 import numpy as np
 from datasets.segDataSet import getDataSet
-from models.model import U_Net
+from models.UNet_test import UNet2d as U_Net
 from segConfig import getConfig
 
 
@@ -24,9 +24,7 @@ def train(model,train_loader,optimizer,device):
         # print(torch.unique(masks))
         optimizer.zero_grad()
         output=model(imgs)
-        loss=nn.CrossEntropyLoss(weight=torch.Tensor([1,10,10],device='cuda'))(output,masks)
-        if loss<0:
-            print(idx,loss)
+        loss=nn.CrossEntropyLoss()(output,masks)
         # print(idx,loss,output.shape,masks.shape)
         loss.backward()
         optimizer.step()
@@ -92,7 +90,7 @@ def main(args):
 
     print('===>Setting optimizer')
     optimizer = optim.Adam(model.parameters(), lr=lrate)#, weight_decay=1e-5)
-    scheduler=optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=10,eta_min=1e-4,last_epoch=-1)
+    # scheduler=optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=10,eta_min=1e-4,last_epoch=-1)
 
     # logger
     if not os.path.exists('./log/seg/'):
@@ -123,7 +121,7 @@ def main(args):
                                                 optimizer.state_dict()['param_groups'][0]['weight_decay']))
         train_loss = train(model=model, train_loader=train_data_loader,optimizer=optimizer,device=device)
         val_loss=val(model=model, train_loader=val_data_loader, device=device,)
-        scheduler.step()
+        # scheduler.step()
         print('Train Loss:%.2f\t\t\tValidation Loss:%.2f'%(train_loss,val_loss))
         if best_performance[1]>train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
