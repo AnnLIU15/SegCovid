@@ -24,7 +24,7 @@ def train(model,train_loader,optimizer,device):
         # print(torch.unique(masks))
         optimizer.zero_grad()
         output=model(imgs)
-        loss=nn.CrossEntropyLoss(weight=torch.Tensor([1,10,10],device='cuda'))(output,masks)
+        loss=nn.CrossEntropyLoss(weight=torch.Tensor([1,20,20]).to(device))(output,masks)
         if loss<0:
             print(idx,loss)
         # print(idx,loss,output.shape,masks.shape)
@@ -90,7 +90,7 @@ def main(args):
     '''
     # summary(model,(1, 512, 512))
 
-    print('===>Setting optimizer')
+    print('===>Setting optimizer and scheduler')
     optimizer = optim.Adam(model.parameters(), lr=lrate)#, weight_decay=1e-5)
     scheduler=optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=10,eta_min=1e-4,last_epoch=-1)
 
@@ -124,19 +124,20 @@ def main(args):
         train_loss = train(model=model, train_loader=train_data_loader,optimizer=optimizer,device=device)
         val_loss=val(model=model, train_loader=val_data_loader, device=device,)
         scheduler.step()
-        print('Train Loss:%.2f\t\t\tValidation Loss:%.2f'%(train_loss,val_loss))
+        print('Epoch %d Train Loss:%.2f\t\t\tValidation Loss:%.2f'%(epoch,train_loss,val_loss))
         if best_performance[1]>train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), }
             torch.save(state, os.path.join(
                 save_dir, 'best_epoch_model.pth'.format(epoch)))
             best_performance = [epoch, train_loss]
+            
         elif epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), }
             torch.save(state, os.path.join(
                 save_dir, 'epoch_{}_model.pth'.format(epoch)))
-
+        print('Best epoch:%d\t\t\tloss:%.4f'%(best_performance[0],best_performance[1]))
         '''
         tensorboard visualize
         ---------------------
