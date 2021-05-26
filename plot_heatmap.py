@@ -1,6 +1,6 @@
 import argparse
 from glob import glob
-
+import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,7 +42,7 @@ def cal_class(masks_dir, out_dir):
 
 
 def main(args):
-    data = cal_class(masks_dir=args.masks_dir, out_dir=args.out_dir)
+    data = cal_class(masks_dir=args.masks_dir, out_dir=args.out_dir+'/'+args.model_name)
     tmp = data.sum(axis=1)  # axis=1每一行相加
     print_data = np.zeros(data.shape)
     for i in range(data.shape[0]):
@@ -63,7 +63,11 @@ def main(args):
     plt.xlabel('Predicted label', fontsize=18)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
+    if not os.path.exists('./output/heatmap/'):
+        os.mkdir('./output/heatmap/')
+    plt.savefig('./output/heatmap/'+args.model_name+'.jpg')
     plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     parser_.add_argument('--masks_dir', type=str,
                          default='data/seg/test/masks')
     parser_.add_argument('--out_dir', type=str,
-                         default='output/segResult/UNet')
+                         default='output/segResult')
     parser_.add_argument('--model_name', type=str, default='UNet')
     args = parser_.parse_args()
     main(args)

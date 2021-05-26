@@ -48,6 +48,6 @@ python segTest.py --model_name R2AttU_Net --num_classes 3 --pth ./output/saved_m
 ### 热力图(test中调用不方便)
 
 ```bash
-python plot_heatmap.py --model_name R2AttU_Net --out_dir output/segResult/R2AttU_Net
+python plot_heatmap.py --model_name R2AttU_Net --out_dir output/segResult
 ```
 

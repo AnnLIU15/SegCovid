@@ -11,12 +11,23 @@ from torchsummary import summary
 from tqdm import tqdm
 
 from datasets.segDataSet import COVID19_SegDataSet
-from models.model import U_Net,R2AttU_Net
+from models.u2net import U2NET,U2NETP
 from segConfig import getConfig
 from utils.loss import dice_loss
 from utils.one_hot import one_hot_mask
 
-def train(model, train_loader, optimizer, device,weight):
+def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v,bce_loss,alpha=0.5):
+    loss0 = bce_loss(d0,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d0)
+    loss1 = bce_loss(d1,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d1)
+    loss2 = bce_loss(d2,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d2)
+    loss3 = bce_loss(d3,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d3)
+    loss4 = bce_loss(d4,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d4)
+    loss5 = bce_loss(d5,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d5)
+    loss6 = bce_loss(d6,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d6)
+    loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
+    return loss0, loss
+
+def train(model, train_loader, optimizer, device,loss_f):
     epoch_loss = 0
     model.train()
     for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Train', total=len(train_loader)):
@@ -24,9 +35,10 @@ def train(model, train_loader, optimizer, device,weight):
         # print('='*30)
         # print(torch.unique(masks))
         optimizer.zero_grad()
-        output = model(imgs)
-        loss = nn.BCEWithLogitsLoss(weight=torch.Tensor(
-            weight).to(device))(output, masks)
+        d0, d1, d2, d3, d4, d5, d6 = model(imgs)
+        one_hot_mask_=one_hot_mask(loss)
+
+        loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,loss_f)
         if loss < 0:
             print(idx, loss)
         # print(idx,loss,output.shape,masks.shape)
@@ -38,15 +50,17 @@ def train(model, train_loader, optimizer, device,weight):
     return epoch_loss
 
 
-def val(model, train_loader, device):
+def val(model, train_loader, device,loss_f):
     epoch_loss = 0
     model.eval()
     with torch.no_grad():
         for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Validation', total=len(train_loader)):
             imgs, masks = imgs.to(device), masks.to(device)
 
-            output = model(imgs)
-            loss = nn.CrossEntropyLoss()(output, masks)
+            d0, d1, d2, d3, d4, d5, d6 = model(imgs)
+            one_hot_mask_=one_hot_mask(loss)
+
+            loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,loss_f)
 
             epoch_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
@@ -87,7 +101,7 @@ def main(args):
         num_workers=8, shuffle=False, drop_last=False)
     print('===>Setup Model')
     # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
-    model=R2AttU_Net(in_channels=1, out_channels=num_classes).to(device)
+    model=U2NET(in_channels=1, out_channels=num_classes).to(device)
     '''
     需要显示模型请把下一句取消注释
     To display the model, please uncomment the next sentence
@@ -120,6 +134,8 @@ def main(args):
     print("Start training at epoch = {:d}".format(start_epoch))
     best_performance = [0, np.Inf]
     train_start_time = time.time()
+    bce_loss = nn.BCEWithLogitsLoss(weight=torch.Tensor(
+            weight,size_average=True).to(device))
 
     for epoch in range(start_epoch, start_epoch+num_epochs):
         epoch_begin_time = time.time()
@@ -129,9 +145,9 @@ def main(args):
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
         train_loss = train(
-            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device,weight=weight)
+            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device,loss_f=bce_loss)
         val_loss = val(
-            model=model, train_loader=val_data_loader, device=device,)
+            model=model, train_loader=val_data_loader, device=device,loss_f=bce_loss)
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))

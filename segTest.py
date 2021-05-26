@@ -11,7 +11,7 @@ from tqdm import tqdm
 from datasets.segDataSet import COVID19_SegDataSet_test
 from models.model import U_Net
 from segConfig import getConfig
-from utils.Metrics import dice_coeff,accuracy_score
+from utils.Metrics import Mereics_score,dice_coef
 from utils.torch2img import saveImage
 def test(model, test_loader, device,save_seg):
     total_loss = 0
@@ -29,8 +29,8 @@ def test(model, test_loader, device,save_seg):
             out_mask=tmp.argmax(dim=1)
 
             saveImage(tmp,imgs_name,save_seg)
-            dice = dice_coeff(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
-            acc=accuracy_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
+            dice = dice_coef(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
+            acc=Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             total_dice+=dice
             total_acc+=acc
 
