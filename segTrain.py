@@ -11,7 +11,7 @@ from torchsummary import summary
 from tqdm import tqdm
 
 from datasets.segDataSet import COVID19_SegDataSet
-from models.model import U_Net
+from models.model import U_Net,R2AttU_Net
 from segConfig import getConfig
 from utils.loss import dice_loss
 from utils.one_hot import one_hot_mask
@@ -55,10 +55,11 @@ def val(model, train_loader, device):
 
 
 def main(args):
-    device, lrate, num_classes, num_epochs, log_name, batch_size,weight =\
-        args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size,args.weight
+    device, lrate, num_classes, num_epochs, log_name, batch_size,weight,model_name =\
+        args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size,args.weight,args.model_name
     preTrainedSegModel, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
         args.preTrainedSegModel, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
+    save_dir=save_dir+'/'+model_name
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     ng = torch.cuda.device_count()
@@ -85,7 +86,8 @@ def main(args):
         dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
         num_workers=8, shuffle=False, drop_last=False)
     print('===>Setup Model')
-    model = U_Net(in_channels=1, out_channels=num_classes).to(device)
+    # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
+    model=R2AttU_Net(in_channels=1, out_channels=num_classes).to(device)
     '''
     需要显示模型请把下一句取消注释
     To display the model, please uncomment the next sentence
@@ -110,7 +112,7 @@ def main(args):
     print('===>Making tensorboard log')
     if log_name == None:
         writer = SummaryWriter(
-            './log/seg/'+time.strftime('%m%d-%H%M', time.localtime(time.time())))
+            './log/seg/'+model_name+time.strftime('%m%d-%H%M', time.localtime(time.time())))
     else:
         writer = SummaryWriter('./log/seg/'+log_name)
 

@@ -27,3 +27,27 @@
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
 
+
+
+### 分割
+
+```bash
+python segTrain.py --model_name R2AttU_Net --num_classes 3
+```
+
+
+
+### 测试
+
+```bash
+python segTest.py --model_name R2AttU_Net --num_classes 3 --pth ./output/saved_models/best_epoch_model.pth
+```
+
+
+
+### 热力图(test中调用不方便)
+
+```bash
+python plot_heatmap.py --model_name R2AttU_Net --out_dir output/segResult/R2AttU_Net
+```
+

@@ -1,5 +1,5 @@
 import numpy as np
-
+from collections import OrderedDict
 def dice_coeff(im1, im2, empty_score=1.0):
     """Calculates the dice coefficient for the images"""
 
@@ -44,5 +44,16 @@ def accuracy_score(prediction, groundtruth):
 
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     N = FP + FN + TP + TN
-    accuracy = np.divide(TP + TN, N)
-    return accuracy * 100.0
+    accuracy = (TP + TN)/N*100.0
+    return accuracy
+
+def Mereics_score(prediction, groundtruth):
+    """Getting the accuracy, sensitivity, Specificity, precision F1-score, of the model"""
+    mereics_dict=OrderedDict()
+    FP, FN, TP, TN = numeric_score(prediction, groundtruth)
+    N = FP + FN + TP + TN
+    
+    mereics_dict['accuracy'] = (TP + TN)/N*100.0
+
+
+    return mereics_dict

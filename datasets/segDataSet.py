@@ -25,10 +25,10 @@ def getTotal(dataset_path,n_classes=3):
     mask_path=dataset_path+'/masks'
     imgs_data,imgs_name=getImage(imgs_path)
     masks_data,masks_name=getImage(mask_path,'.png')
-    masks_name=[var.replace('png','jpg') for var in masks_name]
-    assert imgs_name[:-4]==masks_name[:-4],'掩膜相片与相片对应不上'
+    tmp_masks_name=[var.replace('png','jpg') for var in masks_name]
+    assert imgs_name[:-4]==tmp_masks_name[:-4],'掩膜相片与相片对应不上'
     return torch.FloatTensor(imgs_data).unsqueeze(dim=1), \
-       PreMask(torch.LongTensor(masks_data),n_classes=3),masks_name
+       PreMask(torch.LongTensor(masks_data),n_classes=n_classes),masks_name
 
 def getImage(dataset_path,pic_type='.jpg'):
     '''
