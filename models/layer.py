@@ -201,7 +201,7 @@ class ExpansiveBlock(nn.Module):
     def __init__(self, in_filters1, in_filters2, out_filters, tr_kern=3, conv_kern=3, stride=2, dropout=0.5):
         super(ExpansiveBlock, self).__init__()
         self.t1 = nn.ConvTranspose2d(
-            in_filters1, out_filters, tr_kern, stride=2, padding=1, output_padding=1)
+            in_filters1, out_filters, tr_kern, stride=stride, padding=1, output_padding=1)
         self.d1 = nn.Dropout(dropout)
         self.c1 = ConvolutionBlock(
             out_filters + in_filters2, out_filters, conv_kern)

@@ -10,7 +10,7 @@ from torchsummary import summary
 import torch.optim as optim
 from tqdm import tqdm
 import numpy as np
-from datasets.segDataSet import getDataSet
+from datasets.segDataSet import COVID19_SegDataSet
 from models.model import U_Net
 from segConfig import getConfig
 
@@ -77,10 +77,10 @@ def main(args):
     # Load data
     print('===>Loading dataset')
     train_data_loader = DataLoader(
-        dataset=getDataSet(train_data_dir,n_classes=3), batch_size=batch_size,
+        dataset=COVID19_SegDataSet(train_data_dir,n_classes=3), batch_size=batch_size,
          num_workers=8, shuffle=False, drop_last=False)
     val_data_loader = DataLoader(
-        dataset=getDataSet(val_data_dir,n_classes=3), batch_size=batch_size,
+        dataset=COVID19_SegDataSet(val_data_dir,n_classes=3), batch_size=batch_size,
          num_workers=8, shuffle=False, drop_last=False)
     print('===>Setup Model')
     model = U_Net(in_channels=1, out_channels=num_classes).to(device)
@@ -91,7 +91,7 @@ def main(args):
     # summary(model,(1, 512, 512))
 
     print('===>Setting optimizer and scheduler')
-    optimizer = optim.Adam(model.parameters(), lr=lrate)#, weight_decay=1e-5)
+    optimizer = optim.Adam(model.parameters(), lr=lrate,weight_decay=1e-5)
     scheduler=optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=10,eta_min=1e-4,last_epoch=-1)
 
     # logger
@@ -101,7 +101,7 @@ def main(args):
     if not preTrainedSegModel==None:
         print('===>Loading Pretrained Model')
         checkpoint = torch.load(preTrainedSegModel)
-        model.load_state_dict(checkpoint['model'])
+        model.load_state_dict(checkpoint['model_weights'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint(['epoch'])
     print('===>Making tensorboard log')
@@ -116,15 +116,17 @@ def main(args):
     train_start_time = time.time()
 
 
-    for epoch in range(start_epoch, start_epoch+num_epochs+1):
+    for epoch in range(start_epoch, start_epoch+num_epochs):
         epoch_begin_time= time.time()
         print("\n"+"="*20+"Epoch[{}:{}]".format(epoch, num_epochs)+"="*20 +
               '\nlr={}\tweight_decay={}'.format(optimizer.state_dict()['param_groups'][0]['lr'],
                                                 optimizer.state_dict()['param_groups'][0]['weight_decay']))
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())) 
+
         train_loss = train(model=model, train_loader=train_data_loader,optimizer=optimizer,device=device)
         val_loss=val(model=model, train_loader=val_data_loader, device=device,)
         scheduler.step()
-        print('Epoch %d Train Loss:%.2f\t\t\tValidation Loss:%.2f'%(epoch,train_loss,val_loss))
+        print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f'%(epoch,train_loss,val_loss))
         if best_performance[1]>train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), }
@@ -147,10 +149,10 @@ def main(args):
         writer.add_scalar('train/loss',train_loss,epoch)
         writer.add_scalar('val/loss',val_loss,epoch)
         epoch_time=time.time()-epoch_begin_time
-        print('This epoch cost %.2fs, predicting it will take another %.2fs'\
+        print('This epoch cost %.4fs, predicting it will take another %.4fs'\
             %(epoch_time,epoch_time*(start_epoch+num_epochs-epoch-1)))
     train_end_time = time.time()
-    print('This train total cost %.2fs'%(train_end_time-train_start_time))
+    print('This train total cost %.4fs'%(train_end_time-train_start_time))
     writer.close()
 
 

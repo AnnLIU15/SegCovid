@@ -170,7 +170,6 @@ class R2U_Net(nn.Module):
         else:
             return out
 
-
 class AttU_Net(nn.Module):
     """
     Attention Unet implementation
@@ -267,7 +266,6 @@ class AttU_Net(nn.Module):
         else:
             return out
 
-
 class R2AttU_Net(nn.Module):
     """
     Residual Recuurent Block with attention Unet
@@ -363,7 +361,6 @@ class R2AttU_Net(nn.Module):
             return out
 
 # Nested Unet
-
 
 class NestedUNet(nn.Module):
     """

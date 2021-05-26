@@ -10,7 +10,7 @@ from torchsummary import summary
 import torch.optim as optim
 from tqdm import tqdm
 import numpy as np
-from datasets.segDataSet import getDataSet
+from datasets.segDataSet import COVID19_SegDataSet
 from models.UNet_test import UNet2d as U_Net
 from segConfig import getConfig
 
@@ -75,10 +75,10 @@ def main(args):
     # Load data
     print('===>Loading dataset')
     train_data_loader = DataLoader(
-        dataset=getDataSet(train_data_dir,n_classes=3), batch_size=batch_size,
+        dataset=COVID19_SegDataSet(train_data_dir,n_classes=3), batch_size=batch_size,
          num_workers=8, shuffle=False, drop_last=False)
     val_data_loader = DataLoader(
-        dataset=getDataSet(val_data_dir,n_classes=3), batch_size=batch_size,
+        dataset=COVID19_SegDataSet(val_data_dir,n_classes=3), batch_size=batch_size,
          num_workers=8, shuffle=False, drop_last=False)
     print('===>Setup Model')
     model = U_Net(in_channels=1, out_channels=num_classes).to(device)

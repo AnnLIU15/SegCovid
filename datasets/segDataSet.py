@@ -17,7 +17,7 @@ def PreMask(mask_data,n_classes=3):
         for idx in range(shapeOfMask[0]):
             output[idx]=PreMask(mask_data[0],n_classes)
     return output
-def getTotal(dataset_path):
+def getTotal(dataset_path,n_classes=3):
     '''
     获得dataset_path/imgs与dataset_path/masks下的图片
     '''
@@ -28,7 +28,7 @@ def getTotal(dataset_path):
     masks_name=[var.replace('png','jpg') for var in masks_name]
     assert imgs_name[:-4]==masks_name[:-4],'掩膜相片与相片对应不上'
     return torch.FloatTensor(imgs_data).unsqueeze(dim=1), \
-       PreMask(torch.LongTensor(masks_data)),imgs_name
+       PreMask(torch.LongTensor(masks_data),n_classes=3),imgs_name
 
 def getImage(dataset_path,pic_type='.jpg'):
     '''
@@ -44,7 +44,7 @@ def getImage(dataset_path,pic_type='.jpg'):
         pic_name.append(pic[length_path:])
     return pic_data,pic_name
 
-class getDataSet(Dataset):
+class COVID19_SegDataSet(Dataset):
     '''
     CNCB数据库
     dataset_path为数据路径
@@ -56,7 +56,7 @@ class getDataSet(Dataset):
             >xxxx.png
     '''
     def __init__(self, dataset_path,n_classes=3):
-        super(getDataSet, self).__init__()
+        super(COVID19_SegDataSet, self).__init__()
         self.dataset_path = dataset_path
         self.imgs_data, self.masks_data,self.imgs_name = getTotal(self.dataset_path)
 
@@ -65,10 +65,30 @@ class getDataSet(Dataset):
 
     def __len__(self):
         return len(self.imgs_name)
+class COVID19_SegDataSet_test(Dataset):
+    '''
+    CNCB数据库
+    dataset_path为数据路径
+    目录结构为
+    >dataset_path
+        >imgs
+            >xxxx.jpg
+        >masks
+            >xxxx.png
+    '''
+    def __init__(self, dataset_path,n_classes=3):
+        super(COVID19_SegDataSet_test, self).__init__()
+        self.dataset_path = dataset_path
+        self.imgs_data, self.masks_data,self.imgs_name = getTotal(self.dataset_path,n_classes)
 
+    def __getitem__(self, idx):
+        return self.imgs_data[idx], self.masks_data[idx],self.imgs_name[idx]
+
+    def __len__(self):
+        return len(self.imgs_name)
 
 if __name__ == '__main__':
-    dataset = getDataSet('data/seg/test')
+    dataset = COVID19_SegDataSet('data/seg/test')
     data_loader = DataLoader(
         dataset=dataset, batch_size=8, num_workers=8, shuffle=False, drop_last=False)
     for batch_idx, (data, target) in enumerate(data_loader):
