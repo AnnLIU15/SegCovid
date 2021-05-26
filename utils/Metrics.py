@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def dice_coeff(im1, im2, empty_score=1.0):
     """Calculates the dice coefficient for the images"""
 

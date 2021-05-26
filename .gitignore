@@ -2,6 +2,8 @@
 __pycache__
 data/clf
 data/seg
+output/segResult
+
 *.pyc
 *.exe
 *.[ao]
@@ -10,8 +12,8 @@ output/saved_models
 __pycache__/
 *.py[cod]
 *$py.class
-log/seg
-log/clf
+!log/save_log
+log
 # C extensions
 *.so
 
