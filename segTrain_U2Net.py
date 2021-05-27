@@ -13,21 +13,21 @@ from tqdm import tqdm
 from datasets.segDataSet import COVID19_SegDataSet
 from models.u2net import U2NET,U2NETP
 from segConfig import getConfig
-from utils.loss import dice_loss
+from utils.Metrics import enhanced_mixing_loss
 from utils.one_hot import one_hot_mask
 
-def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v,bce_loss,alpha=0.5):
-    loss0 = bce_loss(d0,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d0)
-    loss1 = bce_loss(d1,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d1)
-    loss2 = bce_loss(d2,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d2)
-    loss3 = bce_loss(d3,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d3)
-    loss4 = bce_loss(d4,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d4)
-    loss5 = bce_loss(d5,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d5)
-    loss6 = bce_loss(d6,labels_v)*(1-alpha)+alpha*dice_loss(labels_v,d6)
+def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v,device):
+    loss0 =enhanced_mixing_loss(d0,labels_v)
+    loss1 =enhanced_mixing_loss(d1,labels_v)
+    loss2 =enhanced_mixing_loss(d2,labels_v)
+    loss3 =enhanced_mixing_loss(d3,labels_v)
+    loss4 =enhanced_mixing_loss(d4,labels_v)
+    loss5 =enhanced_mixing_loss(d5,labels_v)
+    loss6 =enhanced_mixing_loss(d6,labels_v)
     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
     return loss0, loss
 
-def train(model, train_loader, optimizer, device,loss_f):
+def train(model, train_loader, optimizer, device):
     epoch_loss = 0
     model.train()
     for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Train', total=len(train_loader)):
@@ -36,9 +36,9 @@ def train(model, train_loader, optimizer, device,loss_f):
         # print(torch.unique(masks))
         optimizer.zero_grad()
         d0, d1, d2, d3, d4, d5, d6 = model(imgs)
-        one_hot_mask_=one_hot_mask(loss)
-
-        loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,loss_f)
+        one_hot_mask_=one_hot_mask(masks)
+        # print(one_hot_mask_.shape,masks.shape)
+        loss2, loss = muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,device)
         if loss < 0:
             print(idx, loss)
         # print(idx,loss,output.shape,masks.shape)
@@ -50,7 +50,7 @@ def train(model, train_loader, optimizer, device,loss_f):
     return epoch_loss
 
 
-def val(model, train_loader, device,loss_f):
+def val(model, train_loader, device):
     epoch_loss = 0
     model.eval()
     with torch.no_grad():
@@ -58,9 +58,8 @@ def val(model, train_loader, device,loss_f):
             imgs, masks = imgs.to(device), masks.to(device)
 
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
-            one_hot_mask_=one_hot_mask(loss)
 
-            loss2, loss = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,loss_f)
+            loss2, loss = muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, masks,device)
 
             epoch_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
@@ -91,14 +90,7 @@ def main(args):
     print('===>device:', device)
     torch.cuda.manual_seed_all(0)
 
-    # Load data
-    print('===>Loading dataset')
-    train_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
-    val_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
+    
     print('===>Setup Model')
     # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
     model=U2NET(in_channels=1, out_channels=num_classes).to(device)
@@ -122,20 +114,26 @@ def main(args):
         checkpoint = torch.load(preTrainedSegModel)
         model.load_state_dict(checkpoint['model_weights'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        start_epoch = checkpoint(['epoch'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
+        start_epoch = checkpoint['epoch']
     print('===>Making tensorboard log')
     if log_name == None:
         writer = SummaryWriter(
             './log/seg/'+model_name+time.strftime('%m%d-%H%M', time.localtime(time.time())))
     else:
         writer = SummaryWriter('./log/seg/'+log_name)
-
+    # Load data
+    print('===>Loading dataset')
+    train_data_loader = DataLoader(
+        dataset=COVID19_SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
+        num_workers=8, shuffle=False, drop_last=False)
+    val_data_loader = DataLoader(
+        dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
+        num_workers=8, shuffle=False, drop_last=False)
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
     best_performance = [0, np.Inf]
     train_start_time = time.time()
-    bce_loss = nn.BCEWithLogitsLoss(weight=torch.Tensor(
-            weight,size_average=True).to(device))
 
     for epoch in range(start_epoch, start_epoch+num_epochs):
         epoch_begin_time = time.time()
@@ -145,22 +143,22 @@ def main(args):
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
         train_loss = train(
-            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device,loss_f=bce_loss)
+            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device)
         val_loss = val(
-            model=model, train_loader=val_data_loader, device=device,loss_f=bce_loss)
+            model=model, train_loader=val_data_loader, device=device)
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
         if best_performance[1] > train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(), }
+            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
             torch.save(state, os.path.join(
                 save_dir, 'best_epoch_model.pth'.format(epoch)))
             best_performance = [epoch, train_loss]
 
-        elif epoch % save_every == 0:
+        if epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(), }
+            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
             torch.save(state, os.path.join(
                 save_dir, 'epoch_{}_model.pth'.format(epoch)))
         print('Best epoch:%d\t\t\tloss:%.4f' %

@@ -25,7 +25,6 @@ def cal_class(masks_dir, out_dir):
     masks_data = np.where(masks_data > 0, masks_data-1, 0)
     out_data = np.array(out_data)
     cm = confusion_matrix(masks_data.ravel(), out_data.ravel())  # 支持任意类
-    # print(cm)
     # 等同
     # pos_arr=np.zeros(shape=(3,3))
     # pos_arr[2,2]=np.where(((masks_data==2)&(out_data==2)),1,0).sum()   # 行为真实 列为判断
@@ -42,7 +41,10 @@ def cal_class(masks_dir, out_dir):
 
 
 def main(args):
-    data = cal_class(masks_dir=args.masks_dir, out_dir=args.out_dir+'/'+args.model_name)
+    out_dir=args.out_dir+('/'+args.model_name if not args.model_name in args.out_dir else '')
+    print('out_dir:',out_dir)
+    data = cal_class(masks_dir=args.masks_dir, out_dir=out_dir)
+    print(data)
     tmp = data.sum(axis=1)  # axis=1每一行相加
     print_data = np.zeros(data.shape)
     for i in range(data.shape[0]):

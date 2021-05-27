@@ -20,7 +20,7 @@ class REBNCONV(nn.Module):
 ## upsample tensor 'src' to have the same spatial size with tensor 'tar'
 def _upsample_like(src,tar):
 
-    src = F.upsample(src,size=tar.shape[2:],mode='bilinear')
+    src = F.interpolate(src,size=tar.shape[2:],mode='bilinear',align_corners=True)
 
     return src
 
@@ -319,7 +319,10 @@ class U2NET(nn.Module):
 
     def __init__(self,in_channels=1,out_channels=3):
         super(U2NET,self).__init__()
-
+        if out_channels==2:
+            self.s_func=nn.Sigmoid(dim=1)
+        else:
+            self.s_func=nn.Softmax(dim=1)
         self.stage1 = RSU7(in_channels,32,64)
         self.pool12 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
 
@@ -417,14 +420,19 @@ class U2NET(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+        return self.s_func(d0), self.s_func(d1),\
+             self.s_func(d2), self.s_func(d3),\
+             self.s_func(d4), self.s_func(d5), self.s_func(d6)
 
 ### U^2-Net small ###
 class U2NETP(nn.Module):
 
     def __init__(self,in_channels=1,out_channels=3):
         super(U2NETP,self).__init__()
-
+        if out_channels==2:
+            self.s_func=nn.Sigmoid(dim=1)
+        else:
+            self.s_func=nn.Softmax(dim=1)
         self.stage1 = RSU7(in_channels,16,64)
         self.pool12 = nn.MaxPool2d(2,stride=2,ceil_mode=True)
 
@@ -522,4 +530,6 @@ class U2NETP(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+        return self.s_func(d0), self.s_func(d1),\
+             self.s_func(d2), self.s_func(d3),\
+             self.s_func(d4), self.s_func(d5), self.s_func(d6)

@@ -11,7 +11,7 @@ from torchsummary import summary
 from tqdm import tqdm
 
 from datasets.segDataSet import COVID19_SegDataSet
-from models.model import U_Net,R2AttU_Net
+from models.model import U_Net,R2AttU_Net,NestedUNet
 from segConfig import getConfig
 from utils.loss import dice_loss
 from utils.one_hot import one_hot_mask
@@ -25,7 +25,7 @@ def train(model, train_loader, optimizer, device,weight):
         # print(torch.unique(masks))
         optimizer.zero_grad()
         output = model(imgs)
-        loss = nn.BCEWithLogitsLoss(weight=torch.Tensor(
+        loss = nn.CrossEntropyLoss(weight=torch.Tensor(
             weight).to(device))(output, masks)
         if loss < 0:
             print(idx, loss)
@@ -77,17 +77,10 @@ def main(args):
     print('===>device:', device)
     torch.cuda.manual_seed_all(0)
 
-    # Load data
-    print('===>Loading dataset')
-    train_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
-    val_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
+
     print('===>Setup Model')
     # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
-    model=R2AttU_Net(in_channels=1, out_channels=num_classes).to(device)
+    model=NestedUNet(in_channels=1, out_channels=num_classes).to(device)
     '''
     需要显示模型请把下一句取消注释
     To display the model, please uncomment the next sentence
@@ -108,14 +101,22 @@ def main(args):
         checkpoint = torch.load(preTrainedSegModel)
         model.load_state_dict(checkpoint['model_weights'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        start_epoch = checkpoint(['epoch'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
+        start_epoch = checkpoint['epoch']
     print('===>Making tensorboard log')
     if log_name == None:
         writer = SummaryWriter(
             './log/seg/'+model_name+time.strftime('%m%d-%H%M', time.localtime(time.time())))
     else:
         writer = SummaryWriter('./log/seg/'+log_name)
-
+    # Load data
+    print('===>Loading dataset')
+    train_data_loader = DataLoader(
+        dataset=COVID19_SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
+        num_workers=8, shuffle=False, drop_last=False)
+    val_data_loader = DataLoader(
+        dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
+        num_workers=8, shuffle=False, drop_last=False)
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
     best_performance = [0, np.Inf]
@@ -137,14 +138,14 @@ def main(args):
               (epoch, train_loss, val_loss))
         if best_performance[1] > train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(), }
+            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
             torch.save(state, os.path.join(
                 save_dir, 'best_epoch_model.pth'.format(epoch)))
             best_performance = [epoch, train_loss]
 
-        elif epoch % save_every == 0:
+        if epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(), }
+            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
             torch.save(state, os.path.join(
                 save_dir, 'epoch_{}_model.pth'.format(epoch)))
         print('Best epoch:%d\t\t\tloss:%.4f' %
@@ -161,8 +162,9 @@ def main(args):
         print('This epoch cost %.4fs, predicting it will take another %.4fs'
               % (epoch_time, epoch_time*(start_epoch+num_epochs-epoch-1)))
     train_end_time = time.time()
-    print('This train total cost %.4fs' % (train_end_time-train_start_time))
     writer.close()
+
+    print('This train total cost %.4fs' % (train_end_time-train_start_time))
 
 
 if __name__ == '__main__':

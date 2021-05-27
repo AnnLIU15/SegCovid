@@ -6,7 +6,10 @@ import torch
 
 def dice_coef(y_pred,y_true,num_classes=3,epsilon=1e-7):
     """Altered Sorensen–Dice coefficient with epsilon for smoothing."""
-    y_true_flatten = F.one_hot(torch.from_numpy(y_true),num_classes=num_classes).permute(0, 3, 1, 2)
+    if y_pred.shape==y_true.shape:
+        y_true_flatten = F.one_hot(torch.from_numpy(y_true),num_classes=num_classes).permute(0, 3, 1, 2)
+    else:
+        y_true_flatten=y_true
     y_pred_flatten = F.one_hot(torch.from_numpy(y_pred),num_classes=num_classes).permute(0, 3, 1, 2)
 
     if not torch.sum(y_true_flatten) + torch.sum(y_pred_flatten):
@@ -14,6 +17,28 @@ def dice_coef(y_pred,y_true,num_classes=3,epsilon=1e-7):
 
     return (2. * torch.sum(y_true_flatten * y_pred_flatten))/(torch.sum(y_true_flatten) + torch.sum(y_pred_flatten) + epsilon)
 
+def dice_loss(y_pred,y_true,num_classes=3,epsilon=1e-7):
+    return 1-dice_coef(y_pred,y_true,num_classes=num_classes,epsilon=epsilon)
+
+def enhanced_mixing_loss(y_true, y_pred):
+    gamma = 1.1
+    alpha = 0.48
+    smooth = 1.
+    epsilon = 1e-7
+    y_true = y_true.view(-1)
+    y_pred = y_pred.view(-1)
+    # dice loss
+    intersection = (y_true * y_pred).sum()
+    dice_loss = (2. * intersection + smooth) / ((y_true * y_true).sum() + (y_pred * y_pred).sum() + smooth)
+
+    # focal loss
+    y_pred = torch.clamp(y_pred, epsilon)
+
+    pt_1 = torch.where(y_true==1, y_pred, torch.ones_like(y_pred))
+    pt_0 = torch.where(y_true==0, y_pred, torch.zeros_like(y_pred))
+    focal_loss = -torch.mean(alpha * torch.pow(1. - pt_1, gamma) * torch.log(pt_1)) - \
+                 torch.mean((1 - alpha) * torch.pow(pt_0, gamma) * torch.log(1. - pt_0))
+    return focal_loss - torch.log(dice_loss)
 
 # def numeric_score(prediction, groundtruth):
 #     """Computes scores:
@@ -50,4 +75,3 @@ if __name__ == '__main__':
     b=np.zeros_like(a)
     print(Mereics_score(a,b))
     print(dice_coef(a,b))
-    
