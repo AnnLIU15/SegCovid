@@ -56,7 +56,7 @@ def main(args):
     # mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     fig, ax = plt.subplots(figsize=(10, 10))
     conf_matrix = pd.DataFrame(
-        print_data, index=['b&f', 'GGO', 'CO'], columns=['b&f', 'GGO', 'CO'])
+        print_data, index=['bgr+lungs', 'GGO', 'CO'], columns=['bgr+lungs', 'GGO', 'CO'])
 
     sns.heatmap(conf_matrix, fmt='g', square=True, annot=True,
                 annot_kws={"size": 19}, cmap="Blues")

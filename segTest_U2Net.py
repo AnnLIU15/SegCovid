@@ -65,7 +65,7 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
             tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
             ), out_mask.clone().detach().cpu().numpy().ravel(), labels=range(n_classes))
             dice = dice_coef(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
-            order=Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
+            order= Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             total_dice+=dice
             total_acc+=order['accuracy']
             total_pre+=order['precision_score']

@@ -34,7 +34,7 @@ def test(model, test_loader, device,save_seg,model_name):
             out_mask=tmp.argmax(dim=1)
             tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
             ), out_mask.clone().detach().cpu().numpy().ravel(), labels=[0, 1, 2])
-            # saveImage(tmp,imgs_name,save_seg+model_name)
+            saveImage(out_mask,imgs_name,save_seg+'/'+model_name)
             dice = dice_coef(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             order=Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             total_dice+=dice

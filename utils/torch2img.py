@@ -6,8 +6,10 @@ import numpy as np
 
 def torch2imgs(output):
     shapeOFoutput = output.shape
-    if len(shapeOFoutput) == 3:
+    if len(shapeOFoutput) == 3 and shapeOFoutput[0]>1:
         imgs_array = output.argmax(dim=0).clone().detach().cpu().numpy()
+    elif len(shapeOFoutput) == 3 and shapeOFoutput[0]==1:
+        imgs_array = output.clone().detach().cpu().numpy()
     elif len(shapeOFoutput) == 4:
         imgs_array = np.zeros(
             shape=(shapeOFoutput[0], shapeOFoutput[2], shapeOFoutput[3]))
@@ -20,6 +22,7 @@ def torch2imgs(output):
 
 def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/'):
     get_numpy = torch2imgs(imgs_array).astype(np.uint8)
+
     shapeofimg = get_numpy.shape
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)

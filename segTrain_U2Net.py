@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torchsummary import summary
 from tqdm import tqdm
-
+from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize
 from datasets.segDataSet import COVID19_SegDataSet
 from models.u2net import U2NET, U2NETP
 from segConfig import getConfig
@@ -75,6 +75,7 @@ def main(args):
         args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size, args.weight, args.model_name
     preTrainedSegModel, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
         args.preTrainedSegModel, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
+    normalize=args.normalize
     save_dir = save_dir+'/'+model_name
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -126,11 +127,16 @@ def main(args):
         writer = SummaryWriter('./log/seg/'+log_name)
     # Load data
     print('===>Loading dataset')
+    if normalize:
+        SegDataSet=COVID19_SegDataSetNormalize
+    else:
+        SegDataSet=COVID19_SegDataSet
+
     train_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
+        dataset=SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
         num_workers=8, shuffle=False, drop_last=False)
     val_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
+        dataset=SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
         num_workers=8, shuffle=False, drop_last=False)
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
