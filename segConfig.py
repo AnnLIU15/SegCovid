@@ -1,7 +1,7 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-05-28 17:07:08
+# @Last Modified time: 2021-05-28 17:11:38
 import argparse
 
 
@@ -36,7 +36,7 @@ def getConfig(stage):
         parser_.add_argument('--weight', type=list,
                              default=[1, 20, 20], help='交叉熵权值')
         parser_.add_argument('--normalize', type=bool,
-                             default=False, help='交叉熵权值')
+                             default=False, help='归一化img')
     elif stage == "test":
         parser_.add_argument("--pth", type=str, default='./output/saved_models/best_epoch_model.pth',
                              help="训练好的pth路径，模型必须包含以下参数"

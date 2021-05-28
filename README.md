@@ -35,7 +35,7 @@
 python segTrain.py --model_name R2AttU_Net --num_classes 3
 ```
 
-
+python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True
 
 ### 测试
 
