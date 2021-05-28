@@ -48,6 +48,12 @@ python segTest.py --model_name R2AttU_Net --num_classes 3 --pth ./output/saved_m
 ### 热力图(test中调用不方便)
 
 ```bash
-python plot_heatmap.py --model_name R2AttU_Net --out_dir output/segResult
+python plot_heatmap_3c.py --model_name UNet++ --out_dir output/segResult/UNet++
+```
+
+
+
+```
+python segTest_U2Net.py --pth output/saved_models/U2Net/best_epoch_model.pth --num_classes 3 --model_name U2Net
 ```
 

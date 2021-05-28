@@ -7,13 +7,16 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torchsummary import summary
 from tqdm import tqdm
-
+from sklearn.metrics import confusion_matrix
+import numpy as np
 from datasets.segDataSet import COVID19_SegDataSet_test
 from models.model import U_Net,NestedUNet
 from segConfig import getConfig
 from utils.Metrics import Mereics_score,dice_coef
 from utils.torch2img import saveImage
 def test(model, test_loader, device,save_seg,model_name):
+    tmp_matrix = np.zeros(shape=(3, 3))
+
     total_loss = 0
     total_acc = 0
     total_dice =0
@@ -27,10 +30,11 @@ def test(model, test_loader, device,save_seg,model_name):
             output = model(imgs)
             loss = nn.CrossEntropyLoss()(output, masks)
             tmp=output.clone()
-            tmp[:,1:3,:,:]=tmp[:,1:3,:,:]*0.00001
+            tmp[:,1:3,:,:]=tmp[:,1:3,:,:]*1e-5
             out_mask=tmp.argmax(dim=1)
-
-            saveImage(tmp,imgs_name,save_seg+model_name)
+            tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
+            ), out_mask.clone().detach().cpu().numpy().ravel(), labels=[0, 1, 2])
+            # saveImage(tmp,imgs_name,save_seg+model_name)
             dice = dice_coef(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             order=Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             total_dice+=dice
@@ -46,6 +50,7 @@ def test(model, test_loader, device,save_seg,model_name):
     avg_pre=total_pre/ len(test_loader)
     avg_recall=total_recall/ len(test_loader)
     avg_f1=total_f1/ len(test_loader)
+    print(tmp_matrix)
     return avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1
 
 
@@ -96,7 +101,7 @@ def main(args):
         model=model, test_loader=test_data_loader, device=device,save_seg=save_seg,model_name=model_name)
     print('Test Loss:%.4f\t\tdice:%.4f\t\taccuracy:%.4f\t\tprecision:%.4f\t\trecall:%.4f\t\tf1_score:%.4f' 
             % (avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1))
-    print('This train total cost %.4fs' % (time.time()-test_start_time))
+    print('This test total cost %.4fs' % (time.time()-test_start_time))
     with open('log/save_log/'+model_name+'testResult.txt','w') as f:
         print('model_name:',model_name,file=f)
         print('Loss\t\tdice\t\taccuracy\t\tprecision\t\trecall\t\tf1_score',file=f)

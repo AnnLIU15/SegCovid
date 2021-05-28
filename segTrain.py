@@ -14,7 +14,6 @@ from datasets.segDataSet import COVID19_SegDataSet
 from models.model import U_Net,R2AttU_Net,NestedUNet
 from segConfig import getConfig
 from utils.loss import dice_loss
-from utils.one_hot import one_hot_mask
 
 def train(model, train_loader, optimizer, device,weight):
     epoch_loss = 0
@@ -38,7 +37,7 @@ def train(model, train_loader, optimizer, device,weight):
     return epoch_loss
 
 
-def val(model, train_loader, device):
+def val(model, train_loader, device,weight):
     epoch_loss = 0
     model.eval()
     with torch.no_grad():
@@ -46,7 +45,8 @@ def val(model, train_loader, device):
             imgs, masks = imgs.to(device), masks.to(device)
 
             output = model(imgs)
-            loss = nn.CrossEntropyLoss()(output, masks)
+            loss = nn.CrossEntropyLoss(weight=torch.Tensor(
+            weight).to(device))(output, masks)
 
             epoch_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
@@ -132,7 +132,7 @@ def main(args):
         train_loss = train(
             model=model, train_loader=train_data_loader, optimizer=optimizer, device=device,weight=weight)
         val_loss = val(
-            model=model, train_loader=val_data_loader, device=device,)
+            model=model, train_loader=val_data_loader, device=device,weight=weight)
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))

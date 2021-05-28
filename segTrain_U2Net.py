@@ -11,23 +11,25 @@ from torchsummary import summary
 from tqdm import tqdm
 
 from datasets.segDataSet import COVID19_SegDataSet
-from models.u2net import U2NET,U2NETP
+from models.u2net import U2NET, U2NETP
 from segConfig import getConfig
 from utils.Metrics import enhanced_mixing_loss
 from utils.one_hot import one_hot_mask
 
-def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v,device):
-    loss0 =enhanced_mixing_loss(d0,labels_v)
-    loss1 =enhanced_mixing_loss(d1,labels_v)
-    loss2 =enhanced_mixing_loss(d2,labels_v)
-    loss3 =enhanced_mixing_loss(d3,labels_v)
-    loss4 =enhanced_mixing_loss(d4,labels_v)
-    loss5 =enhanced_mixing_loss(d5,labels_v)
-    loss6 =enhanced_mixing_loss(d6,labels_v)
+
+def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v, weight, device, num_classes):
+    loss0 = enhanced_mixing_loss(d0, labels_v, weight, device, alpha=0.5,n_classes=num_classes)
+    loss1 = enhanced_mixing_loss(d1, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss2 = enhanced_mixing_loss(d2, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss3 = enhanced_mixing_loss(d3, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss4 = enhanced_mixing_loss(d4, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss5 = enhanced_mixing_loss(d5, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss6 = enhanced_mixing_loss(d6, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
     return loss0, loss
 
-def train(model, train_loader, optimizer, device):
+
+def train(model, train_loader, optimizer, device, weight, num_classes):
     epoch_loss = 0
     model.train()
     for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Train', total=len(train_loader)):
@@ -36,11 +38,11 @@ def train(model, train_loader, optimizer, device):
         # print(torch.unique(masks))
         optimizer.zero_grad()
         d0, d1, d2, d3, d4, d5, d6 = model(imgs)
-        one_hot_mask_=one_hot_mask(masks)
         # print(one_hot_mask_.shape,masks.shape)
-        loss2, loss = muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, one_hot_mask_,device)
-        if loss < 0:
-            print(idx, loss)
+        loss2, loss = muti_c_dice_loss_fusion(
+            d0, d1, d2, d3, d4, d5, d6, masks, weight, device, num_classes)
+        # if loss < 0:
+        #     print(idx, loss)
         # print(idx,loss,output.shape,masks.shape)
         loss.backward()
         optimizer.step()
@@ -50,7 +52,7 @@ def train(model, train_loader, optimizer, device):
     return epoch_loss
 
 
-def val(model, train_loader, device):
+def val(model, train_loader, device, weight, num_classes):
     epoch_loss = 0
     model.eval()
     with torch.no_grad():
@@ -59,7 +61,8 @@ def val(model, train_loader, device):
 
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
 
-            loss2, loss = muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, masks,device)
+            loss2, loss = muti_c_dice_loss_fusion(
+                d0, d1, d2, d3, d4, d5, d6, masks, weight, device, num_classes)
 
             epoch_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
@@ -68,11 +71,11 @@ def val(model, train_loader, device):
 
 
 def main(args):
-    device, lrate, num_classes, num_epochs, log_name, batch_size,weight,model_name =\
-        args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size,args.weight,args.model_name
+    device, lrate, num_classes, num_epochs, log_name, batch_size, weight, model_name =\
+        args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size, args.weight, args.model_name
     preTrainedSegModel, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
         args.preTrainedSegModel, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
-    save_dir=save_dir+'/'+model_name
+    save_dir = save_dir+'/'+model_name
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     ng = torch.cuda.device_count()
@@ -90,10 +93,9 @@ def main(args):
     print('===>device:', device)
     torch.cuda.manual_seed_all(0)
 
-    
     print('===>Setup Model')
     # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
-    model=U2NET(in_channels=1, out_channels=num_classes).to(device)
+    model = U2NET(in_channels=1, out_channels=num_classes).to(device)
     '''
     需要显示模型请把下一句取消注释
     To display the model, please uncomment the next sentence
@@ -143,22 +145,22 @@ def main(args):
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
         train_loss = train(
-            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device)
+            model=model, train_loader=train_data_loader, optimizer=optimizer, device=device, weight=weight, num_classes=num_classes)
         val_loss = val(
-            model=model, train_loader=val_data_loader, device=device)
+            model=model, train_loader=val_data_loader, device=device, weight=weight, num_classes=num_classes)
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
         if best_performance[1] > train_loss:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
+            ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
                 save_dir, 'best_epoch_model.pth'.format(epoch)))
             best_performance = [epoch, train_loss]
 
         if epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
-            ), 'optimizer': optimizer.state_dict(),'scheduler':scheduler.state_dict() }
+            ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
                 save_dir, 'epoch_{}_model.pth'.format(epoch)))
         print('Best epoch:%d\t\t\tloss:%.4f' %

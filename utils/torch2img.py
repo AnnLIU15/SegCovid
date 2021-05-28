@@ -25,10 +25,12 @@ def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/'):
         os.mkdir(save_dir)
     if len(shapeofimg) == 3:
         for idx in range(shapeofimg[0]):
-            cv2.imwrite(save_dir+name_of_imgs[idx], get_numpy[idx], [
+            cv2.imwrite(save_dir+'/'+name_of_imgs[idx], get_numpy[idx], [
                         int(cv2.IMWRITE_PNG_COMPRESSION), 0])
     else:
-        cv2.imwrite('./output/seg_masks/'+name_of_imgs, get_numpy,
+        if isinstance(name_of_imgs,tuple):
+            name_of_imgs=name_of_imgs[0]
+        cv2.imwrite(save_dir+'/'+name_of_imgs, get_numpy,
                     [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
 
 

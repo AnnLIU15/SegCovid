@@ -420,9 +420,7 @@ class U2NET(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return self.s_func(d0), self.s_func(d1),\
-             self.s_func(d2), self.s_func(d3),\
-             self.s_func(d4), self.s_func(d5), self.s_func(d6)
+        return d0, d1,d2, d3,d4, d5, d6
 
 ### U^2-Net small ###
 class U2NETP(nn.Module):
@@ -530,6 +528,4 @@ class U2NETP(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return self.s_func(d0), self.s_func(d1),\
-             self.s_func(d2), self.s_func(d3),\
-             self.s_func(d4), self.s_func(d5), self.s_func(d6)
+        return d0, d1,d2, d3,d4, d5, d6

@@ -43,11 +43,4 @@ def one_hot_single(data,n_classes=3):
                     GGO=1
                     CO=2               
     '''
-    if n_classes==3:
-        data=torch.where(data>1.0,data-1,0)
-    elif n_classes==2:
-        data=torch.where(data>1.0,1,0)
-    else:
-        print('未知情况，若图片多分类，请自行添加，修改文件'+os.path.realpath(__file__))
-        exit(10086)
     return F.one_hot(data,n_classes).permute(0,3,1,2)

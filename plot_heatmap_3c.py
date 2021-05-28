@@ -45,10 +45,10 @@ def main(args):
     print('out_dir:',out_dir)
     data = cal_class(masks_dir=args.masks_dir, out_dir=out_dir)
     print(data)
-    tmp = data.sum(axis=1)  # axis=1每一行相加
+    tmp = data.sum(axis=0)  # axis=1每一行相加
     print_data = np.zeros(data.shape)
     for i in range(data.shape[0]):
-        print_data[i, :] = np.array(data[i, :]/tmp[i])
+        print_data[:,i] = np.array(data[:,i]/tmp[i])
     # # 设置汉字格式print_data
     # # sans-serif就是无衬线字体，是一种通用字体族。
     # # 常见的无衬线字体有 Trebuchet MS, Tahoma, Verdana, Arial, Helvetica,SimHei 中文的幼圆、隶书等等
@@ -60,7 +60,7 @@ def main(args):
 
     sns.heatmap(conf_matrix, fmt='g', square=True, annot=True,
                 annot_kws={"size": 19}, cmap="Blues")
-    plt.title(args.model_name+'_heatmap_each row equal to 1')
+    plt.title(args.model_name+'_heatmap_each col equal to 1')
     plt.ylabel('True label', fontsize=18)
     plt.xlabel('Predicted label', fontsize=18)
     plt.xticks(fontsize=18)
