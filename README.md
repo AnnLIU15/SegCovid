@@ -8,7 +8,7 @@
 | Cuda版本 | 10.0                            |
 | 库       | [requirements](./requirement.txt) |
 
-
+即将加入dropout层
 
 ## 分割神经网络模型
 
