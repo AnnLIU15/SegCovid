@@ -3,7 +3,7 @@ __pycache__
 data/clf
 data/seg
 output/segResult
-
+output/radiomics
 *.pyc
 *.exe
 *.[ao]

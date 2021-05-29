@@ -26,7 +26,7 @@
 | [bigmb/Unet-Segmentation-Pytorch-Nest-of-Unets](https://github.com/bigmb/Unet-Segmentation-Pytorch-Nest-of-Unets) |
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
-
+U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://github.com/xuebinqin/U-2-Net)
 ### 分割数据预处理
 
 in_dir 数据目录，其有子目录imgs与masks
@@ -60,6 +60,9 @@ python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --
 2类
 ```
 python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 160 --weight 1 40
+
+
+python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 40 --lrate 1e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_65_model.pth --log_name U2Net_n_2c0529-2000
 ```
 
 

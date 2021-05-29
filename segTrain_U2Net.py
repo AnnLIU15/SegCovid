@@ -113,7 +113,7 @@ def main(args):
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(
     #    optimizer, T_max=10, eta_min=1e-5, last_epoch=-1)
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=10, eta_min=1e-5, last_epoch=-1, T_mult=2)
+        optimizer, T_0=10, eta_min=1e-7, last_epoch=-1, T_mult=2)
     # logger
     if not os.path.exists('./log/seg/'):
         os.makedirs('./log/seg/')
