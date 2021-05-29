@@ -7,24 +7,30 @@ import torch.nn as nn
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
-from torchsummary import summary
 from tqdm import tqdm
-from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize
+
 from datasets.segDataSet import COVID19_SegDataSet
+from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize
 from models.u2net import U2NET, U2NETP
 from segConfig import getConfig
 from utils.Metrics import enhanced_mixing_loss
-from utils.one_hot import one_hot_mask
 
 
 def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v, weight, device, num_classes):
-    loss0 = enhanced_mixing_loss(d0, labels_v, weight, device, alpha=0.5,n_classes=num_classes)
-    loss1 = enhanced_mixing_loss(d1, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
-    loss2 = enhanced_mixing_loss(d2, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
-    loss3 = enhanced_mixing_loss(d3, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
-    loss4 = enhanced_mixing_loss(d4, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
-    loss5 = enhanced_mixing_loss(d5, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
-    loss6 = enhanced_mixing_loss(d6, labels_v, weight, device,alpha=0.5, n_classes=num_classes)
+    loss0 = enhanced_mixing_loss(
+        d0, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss1 = enhanced_mixing_loss(
+        d1, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss2 = enhanced_mixing_loss(
+        d2, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss3 = enhanced_mixing_loss(
+        d3, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss4 = enhanced_mixing_loss(
+        d4, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss5 = enhanced_mixing_loss(
+        d5, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
+    loss6 = enhanced_mixing_loss(
+        d6, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
     return loss0, loss
 
@@ -34,8 +40,6 @@ def train(model, train_loader, optimizer, device, weight, num_classes):
     model.train()
     for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Train', total=len(train_loader)):
         imgs, masks = imgs.to(device), masks.to(device)
-        # print('='*30)
-        # print(torch.unique(masks))
         optimizer.zero_grad()
         d0, d1, d2, d3, d4, d5, d6 = model(imgs)
         # print(one_hot_mask_.shape,masks.shape)
@@ -75,7 +79,7 @@ def main(args):
         args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size, args.weight, args.model_name
     preTrainedSegModel, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
         args.preTrainedSegModel, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
-    normalize=args.normalize
+    normalize = args.normalize
     save_dir = save_dir+'/'+model_name
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -106,9 +110,10 @@ def main(args):
     print('===>Setting optimizer and scheduler')
     optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-4)
     ''''''
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=10, eta_min=1e-8, last_epoch=-1)
-
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(
+    #    optimizer, T_max=10, eta_min=1e-5, last_epoch=-1)
+    scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=10, eta_min=1e-5, last_epoch=-1, T_mult=2)
     # logger
     if not os.path.exists('./log/seg/'):
         os.makedirs('./log/seg/')
@@ -128,20 +133,19 @@ def main(args):
         writer = SummaryWriter('./log/seg/'+log_name)
     # Load data
     if normalize:
-        SegDataSet=COVID19_SegDataSetNormalize
+        SegDataSet = COVID19_SegDataSetNormalize
     else:
-        SegDataSet=COVID19_SegDataSet
+        SegDataSet = COVID19_SegDataSet
     print('===>Loading dataset')
-    
 
     train_data_loader = DataLoader(
-        dataset=SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
+        dataset=SegDataSet(train_data_dir, n_classes=num_classes), batch_size=batch_size,
         num_workers=8, shuffle=True, drop_last=False)
     val_data_loader = DataLoader(
-        dataset=SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
+        dataset=SegDataSet(val_data_dir, n_classes=num_classes), batch_size=batch_size,
         num_workers=8, shuffle=True, drop_last=False)
-    print('train_data_loader:',len(train_data_loader))
-    print('val_data_loader:',len(val_data_loader))
+    print('train_data_loader:', len(train_data_loader))
+    print('val_data_loader:', len(val_data_loader))
 
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
@@ -162,7 +166,7 @@ def main(args):
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
-        if best_performance[1] > train_loss:
+        if best_performance[1] > train_loss and train_loss>0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(

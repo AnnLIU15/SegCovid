@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Your name
 # @Date:   2020-12-08 23:48:30
-# @Last Modified by:   Your name
-# @Last Modified time: 2020-12-08 23:48:30
+# @Last Modified by:   ZhaoYang
+# @Last Modified time: 2021-05-29 16:16:39
 
 import os
 
@@ -51,7 +51,7 @@ class BatchRenamePics(object):
 
 if __name__ == '__main__':
     # 设置起始路径path
-    path = r'/home/e201-cv-01/Desktop/ct_ncp/TS/COVID-CT-Mask-Net-master/covid_data/cncb/'
+    path = './data/raw/'
     # 创建实例对象
     pics = BatchRenamePics(path)
     # 调用实例方法

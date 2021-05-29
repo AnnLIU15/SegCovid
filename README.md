@@ -48,7 +48,7 @@ python datasets/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir
 python segTrain.py --model_name R2AttU_Net --num_classes 3
 ```
 
-新版dataloader
+新版dataloader3类
 
 ```
 python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test
@@ -57,9 +57,10 @@ python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True -
 
 python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n/epoch_150_model.pth
 ```
-
-
-
+2类
+```
+python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 160 --weight 1 40
+```
 
 
 

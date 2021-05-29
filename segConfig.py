@@ -1,7 +1,7 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-05-29 13:57:18
+# @Last Modified time: 2021-05-29 16:18:13
 import argparse
 
 
@@ -34,7 +34,7 @@ def getConfig(stage):
                              default=1e-3, help="initial Learning rate")
         parser_.add_argument('--log_name', type=str,
                              default=None, help='中断后继续训练记载')
-        parser_.add_argument('--weight', type=list,
+        parser_.add_argument('--weight', type=float,nargs='+',
                              default=[1, 20, 20], help='交叉熵权值')
         
     elif stage == "test":
