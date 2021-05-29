@@ -104,9 +104,10 @@ def main(args):
     # summary(model,(1, 512, 512))
 
     print('===>Setting optimizer and scheduler')
-    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-5)
+    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-4)
+    ''''''
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=10, eta_min=1e-4, last_epoch=-1)
+        optimizer, T_max=10, eta_min=1e-8, last_epoch=-1)
 
     # logger
     if not os.path.exists('./log/seg/'):
@@ -116,9 +117,9 @@ def main(args):
         print('===>Loading Pretrained Model')
         checkpoint = torch.load(preTrainedSegModel)
         model.load_state_dict(checkpoint['model_weights'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        scheduler.load_state_dict(checkpoint['scheduler'])
-        start_epoch = checkpoint['epoch']
+        # optimizer.load_state_dict(checkpoint['optimizer'])
+        # scheduler.load_state_dict(checkpoint['scheduler'])
+        start_epoch = checkpoint['epoch']+1
     print('===>Making tensorboard log')
     if log_name == None:
         writer = SummaryWriter(
@@ -126,18 +127,22 @@ def main(args):
     else:
         writer = SummaryWriter('./log/seg/'+log_name)
     # Load data
-    print('===>Loading dataset')
     if normalize:
         SegDataSet=COVID19_SegDataSetNormalize
     else:
         SegDataSet=COVID19_SegDataSet
+    print('===>Loading dataset')
+    
 
     train_data_loader = DataLoader(
         dataset=SegDataSet(train_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
+        num_workers=8, shuffle=True, drop_last=False)
     val_data_loader = DataLoader(
         dataset=SegDataSet(val_data_dir, n_classes=3), batch_size=batch_size,
-        num_workers=8, shuffle=False, drop_last=False)
+        num_workers=8, shuffle=True, drop_last=False)
+    print('train_data_loader:',len(train_data_loader))
+    print('val_data_loader:',len(val_data_loader))
+
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
     best_performance = [0, np.Inf]
@@ -145,7 +150,7 @@ def main(args):
 
     for epoch in range(start_epoch, start_epoch+num_epochs):
         epoch_begin_time = time.time()
-        print("\n"+"="*20+"Epoch[{}:{}]".format(epoch, num_epochs)+"="*20 +
+        print("\n"+"="*20+"Epoch[{}:{}]".format(epoch, start_epoch+num_epochs)+"="*20 +
               '\nlr={}\tweight_decay={}'.format(optimizer.state_dict()['param_groups'][0]['lr'],
                                                 optimizer.state_dict()['param_groups'][0]['weight_decay']))
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

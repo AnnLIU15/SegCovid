@@ -94,17 +94,7 @@ def getImage(dataset_path, img_type, n_classes, pic_type='.jpg', normalize=True)
         pic_name.append(pic[length_path:-4])
     return np.array(pic_data), pic_name
 
-def imgs_normalize(dataset_path, normalize=True):
-    '''
-    获取当前目录下的所有pic_type格式的图片
-    '''
-    pics = sorted(glob(dataset_path+'/*.png'))
-    length_path = len(dataset_path)+1
-    
-    for pic in pics:
-        pic_ = cv2.imread(pic, cv2.IMREAD_GRAYSCALE)
-        pic_=PreImg(pic_)
-        print(pic[length_path:],pic_.shape,pic_.max())
+
 
 
 

@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 # source data and label data
 imgsdir = 'data/seg/test/imgs'
 labeldir = 'data/seg/test/masks'
-outputdir = 'output/segResult/U2Net'
+outputdir = 'output/segResult/U2Net_n'
 
 # save images of left and right chests
-check_dir = 'output/segResult/visualize'
+check_dir = 'output/segResult/U2Net_visualize'
 if not os.path.exists(check_dir):
     os.makedirs(check_dir)
 

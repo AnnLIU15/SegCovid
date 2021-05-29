@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from torchsummary import summary
 from tqdm import tqdm
 import torch.nn.functional as F
+from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize_test
 from datasets.segDataSet import COVID19_SegDataSet_test
 from models.u2net import U2NET
 from segConfig import getConfig
@@ -54,13 +55,18 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
                 dim=1), n_classes).permute(0, 3, 1, 2)
             d6_tmp = F.one_hot(d6.clone().argmax(
                 dim=1), n_classes).permute(0, 3, 1, 2)
-            d=torch.Tensor([3.5,1.5,1,1,1,1,1])
-            add_lesion = -2.1
+
+
+            d=torch.Tensor([1,0,0,0,0,0,0,0])
+            add_lesion = 0
+
+
+
             tmp = d0_tmp*d[0]+d1_tmp*d[1]+d2_tmp*d[2]+d3_tmp*d[3]\
                 +d4_tmp*d[4]+d5_tmp*d[5]+d6_tmp*d[6]
             tmp[:, 1:n_classes, :, :] = tmp[:, 1:n_classes, :, :]+add_lesion
             out_mask = tmp.argmax(dim=1)
-            saveImage(out_mask,imgs_name,save_seg+'/'+model_name)
+            # saveImage(out_mask,imgs_name,save_seg+'/'+model_name,True)
 
             tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
             ), out_mask.clone().detach().cpu().numpy().ravel(), labels=range(n_classes))
@@ -83,22 +89,27 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
     print('add:', add_lesion)
 
     print(tmp_matrix)
+    tmp = tmp_matrix.sum(axis=0)  # axis=1每一行相加
+    print_data = np.zeros(tmp_matrix.shape)
+    for i in range(tmp_matrix.shape[0]):
+        print_data[:,i] = np.array(tmp_matrix[:,i]/tmp[i])
+    print(print_data)
 
-   
+
     return avg_dice,avg_acc,avg_pre,avg_recall,avg_f1
 
 
 def main(args):
-    device, num_classes, pth, save_seg, test_data_dir, model_name = \
-        args.device, args.num_classes, args.pth, args.save_seg, args.test_data_dir, args.model_name
+    device, num_classes, pth, save_seg, test_data_dir, model_name ,normalize= \
+        args.device, args.num_classes, args.pth, args.save_seg, args.test_data_dir, args.model_name,args.normalize
 
     if not os.path.exists(save_seg):
         os.makedirs(save_seg)
-    ng = torch.cuda.device_count()
-    print("Available cuda Devices:{}".format(ng))
-    for i in range(ng):
-        print('device%d:' % i, end='')
-        print(torch.cuda.get_device_properties(i))
+    # ng = torch.cuda.device_count()
+    # print("Available cuda Devices:{}".format(ng))
+    # for i in range(ng):
+    #     print('device%d:' % i, end='')
+    #     print(torch.cuda.get_device_properties(i))
 
     if device == 'cuda':
         torch.cuda.set_device(0)
@@ -106,28 +117,31 @@ def main(args):
             print('Cuda is not available, use CPU to train.')
             device = 'cpu'
     device = torch.device(device)
-    print('===>device:', device)
+    # print('===>device:', device)
     torch.cuda.manual_seed_all(0)
 
     # Load data
 
-    print('===>Setup Model')
+    # print('===>Setup Model')
     model = U2NET(in_channels=1, out_channels=num_classes).to(device)
     checkpoint = torch.load(pth)
-    print('===>Loaded Weight')
+    # print('===>Loaded Weight')
     model.load_state_dict(checkpoint['model_weights'])
-
-    print('===>Loading dataset')
+    if normalize:
+        SegDataSet=COVID19_SegDataSetNormalize_test
+    else:
+        SegDataSet=COVID19_SegDataSet_test    
+    # print('===>Loading dataset')
     test_data_loader = DataLoader(
-        dataset=COVID19_SegDataSet_test(test_data_dir, n_classes=3), batch_size=1,
+        dataset=SegDataSet(test_data_dir, n_classes=3), batch_size=1,
         num_workers=8, shuffle=False, drop_last=False)
     '''
     需要显示模型请把下一句取消注释
     To display the model, please uncomment the next sentence
     '''
-    print('===>Display model')
+    # print('===>Display model')
     #summary(model, (1, 512, 512))
-    print('===>Start Testing')
+    # print('===>Start Testing')
     test_start_time = time.time()
 
     # avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1=
@@ -137,11 +151,11 @@ def main(args):
     print('Test dice:%.4f\t\taccuracy:%.4f\t\tprecision:%.4f\t\trecall:%.4f\t\tf1_score:%.4f'
             % (avg_dice,avg_acc,avg_pre,avg_recall,avg_f1))
     print('This test total cost %.4fs' % (time.time()-test_start_time))
-    # with open('log/save_log/'+model_name+'testResult.txt','w') as f:
-    #     print('model_name:',model_name,file=f)
-    #     print('Loss\t\tdice\t\taccuracy\t\tprecision\t\trecall\t\tf1_score',file=f)
-    #     print('%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f'%
-    #         (avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1),file=f)
+    with open('log/save_log/'+model_name+'testResult.txt','w') as f:
+        print('model_name:',model_name,file=f)
+        print('dice\t\taccuracy\t\tprecision\t\trecall\t\tf1_score',file=f)
+        print('%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f'%
+            (avg_dice,avg_acc,avg_pre,avg_recall,avg_f1),file=f)
 if __name__ == '__main__':
     args = getConfig('test')
     main(args)

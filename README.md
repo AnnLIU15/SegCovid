@@ -27,15 +27,42 @@
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
 
+### 分割数据预处理
+
+in_dir 数据目录，其有子目录imgs与masks
+
+out_dir 输出npy数组目录，后续生成子目录imgs与masks+str(n_classes)
+
+```bash
+python datasets/preprocessSeg.py --in_dir data/seg/train/ --n_classes 3 --out_dir data/seg/process/train/
+python datasets/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir data/seg/process/test/
+```
+
 
 
 ### 分割
+
+旧版dataloader
 
 ```bash
 python segTrain.py --model_name R2AttU_Net --num_classes 3
 ```
 
-python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True
+新版dataloader
+
+```
+python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test
+
+python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --log_name U2Net_n0528-2050 --preTrainedSegModel output/saved_models/U2Net_n/epoch_50_model.pth
+
+python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n/epoch_150_model.pth
+```
+
+
+
+
+
+
 
 ### 测试
 

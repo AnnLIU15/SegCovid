@@ -20,7 +20,7 @@ def torch2imgs(output):
     return imgs_array
 
 
-def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/'):
+def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/',npy_type=False):
     get_numpy = torch2imgs(imgs_array).astype(np.uint8)
 
     shapeofimg = get_numpy.shape
@@ -28,12 +28,20 @@ def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/'):
         os.mkdir(save_dir)
     if len(shapeofimg) == 3:
         for idx in range(shapeofimg[0]):
-            cv2.imwrite(save_dir+'/'+name_of_imgs[idx], get_numpy[idx], [
+            if isinstance(name_of_imgs[idx],tuple):
+                writer_name=name_of_imgs[idx][0]
+            else:
+                writer_name=name_of_imgs[idx]
+            if npy_type:
+                writer_name=writer_name+'.png'
+            cv2.imwrite(save_dir+'/'+writer_name, get_numpy[idx], [
                         int(cv2.IMWRITE_PNG_COMPRESSION), 0])
     else:
         if isinstance(name_of_imgs,tuple):
             name_of_imgs=name_of_imgs[0]
-        cv2.imwrite(save_dir+'/'+name_of_imgs, get_numpy,
+        if npy_type:
+            writer_name=name_of_imgs+'.png'
+        cv2.imwrite(save_dir+'/'+writer_name, get_numpy,
                     [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
 
 
