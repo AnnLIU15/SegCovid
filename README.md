@@ -62,7 +62,7 @@ python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --
 python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 160 --weight 1 40
 
 
-python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 40 --lrate 1e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_65_model.pth --log_name U2Net_n_2c0529-2000
+python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 40 --lrate 1e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_70_model.pth --log_name U2Net_n_2c0529-2000
 ```
 
 

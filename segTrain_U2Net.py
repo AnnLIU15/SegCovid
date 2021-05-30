@@ -108,12 +108,12 @@ def main(args):
     # summary(model,(1, 512, 512))
 
     print('===>Setting optimizer and scheduler')
-    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=9e-4)
     ''''''
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(
     #    optimizer, T_max=10, eta_min=1e-5, last_epoch=-1)
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=10, eta_min=1e-7, last_epoch=-1, T_mult=2)
+        optimizer, T_0=10, eta_min=1e-5, last_epoch=-1, T_mult=2)
     # logger
     if not os.path.exists('./log/seg/'):
         os.makedirs('./log/seg/')
@@ -122,8 +122,8 @@ def main(args):
         print('===>Loading Pretrained Model')
         checkpoint = torch.load(preTrainedSegModel)
         model.load_state_dict(checkpoint['model_weights'])
-        # optimizer.load_state_dict(checkpoint['optimizer'])
-        # scheduler.load_state_dict(checkpoint['scheduler'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
         start_epoch = checkpoint['epoch']+1
     print('===>Making tensorboard log')
     if log_name == None:
