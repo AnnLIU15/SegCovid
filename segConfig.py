@@ -1,7 +1,7 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-06-02 16:17:02
+# @Last Modified time: 2021-06-02 21:07:11
 import argparse
 
 
@@ -45,5 +45,12 @@ def getConfig(stage):
                              help="Path to the test data. Must contain images and may contain binary masks")
         parser_.add_argument("--save_seg", type=str,
                              default='./output/segResult/')
+    elif stage == "infer":
+        parser_.add_argument("--pth", type=str, default='./output/saved_models/best_epoch_model.pth',
+                             help="训练好的pth路径，模型必须包含以下参数"
+                                  "model_weights, optimizer_state, anchor_generator")
+        parser_.add_argument("--infer_data_dir", type=str, nargs='+', default=['/home/e201cv/Desktop/covid_data/process_clf/train',
+         '/home/e201cv/Desktop/covid_data/process_clf/val', '/home/e201cv/Desktop/covid_data/process_clf/test'],
+                             help="Path to the test data. Must contain images and may contain binary masks")
     model_args = parser_.parse_args()
     return model_args

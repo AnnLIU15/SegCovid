@@ -44,9 +44,9 @@ in_dir 数据目录，其有子目录imgs与masks
 out_dir 输出npy数组目录，后续生成子目录imgs与masks+str(n_classes)
 
 ```bash
-python datasets/rename_seg_pic.py
-python datasets/preprocessSeg.py --in_dir data/seg/train/ --n_classes 3 --out_dir data/seg/process/train/
-python datasets/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir data/seg/process/test/
+python ./utils/rename_seg_pic.py
+python ./utils/preprocessSeg.py --in_dir data/seg/train/ --n_classes 3 --out_dir data/seg/process/train/
+python ./utils/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir data/seg/process/test/
 ```
 
 
@@ -105,4 +105,9 @@ pipreqs . --encoding=utf8 --force
 ```
 python Radiomics/exact_radiomics.py
 ```
+### 3. 分类
+#### 预处理分类图片
 
+```
+python ./utils/preprocessClf.py --in_dir /home/e201cv/Desktop/covid_data/clf/train /home/e201cv/Desktop/covid_data/clf/val /home/e201cv/Desktop/covid_data/clf/test --out_dir /home/e201cv/Desktop/covid_data/process_clf/train /home/e201cv/Desktop/covid_data/process_clf/val /home/e201cv/Desktop/covid_data/process_clf/test
+```
