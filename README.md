@@ -99,3 +99,9 @@ python visualizeSeg.py
 pipreqs . --encoding=utf8 --force
 ```
 
+#### 影像组学
+
+```
+python Radiomics/exact_radiomics.py
+```
+
