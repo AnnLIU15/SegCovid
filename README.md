@@ -2,7 +2,7 @@
 
 ## 运行环境
 
-| Version  | v1.0    20210529                |
+| Version  | v2.0    20210602             |
 | -------- | ------------------------------- |
 | 编程语言 | Python                          |
 | Cuda版本 | 10.0                            |
@@ -19,7 +19,6 @@
 | [U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://github.com/xuebinqin/U-2-Net) |
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
-
 
 ### 1. 数据预处理
 
@@ -40,8 +39,6 @@ mask中label表示如下(以png文件的灰度值区分)
 
 
 
-
-
 in_dir 数据目录，其有子目录imgs与masks
 
 out_dir 输出npy数组目录，后续生成子目录imgs与masks+str(n_classes)
@@ -53,7 +50,7 @@ python datasets/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir
 
 
 
-### 分割训练与测试
+### 2. 分割训练与测试
 
 3-classes **Train**
 
@@ -83,17 +80,22 @@ python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --ba
  python segTest.py --model_name U2Net_n --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n_2c/epoch_70_model.pth
 ```
 
-### 热力图(test中调用不方便)
+#### 热力图(test中调用不方便)
 
 ```bash
 python plot_heatmap_2c.py --model_name U2Net_n --out_dir output/segResult/
+python plot_heatmap_3c.py --model_name U2Net_n --out_dir output/segResult/
 ```
 
-### 可视化
+#### 可视化
 
 ```
 python visualizeSeg.py
 ```
 
+#### 导出requirements.txt
 
+```
+pipreqs . --encoding=utf8 --force
+```
 

@@ -1,6 +1,7 @@
 import argparse
-from glob import glob
 import os
+from glob import glob
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,8 +42,9 @@ def cal_class(masks_dir, out_dir):
 
 
 def main(args):
-    out_dir=args.out_dir+('/'+args.model_name if not args.model_name in args.out_dir else '')
-    print('out_dir:',out_dir)
+    out_dir = args.out_dir + \
+        ('/'+args.model_name if not args.model_name in args.out_dir else '')
+    print('out_dir:', out_dir)
     data = cal_class(masks_dir=args.masks_dir, out_dir=out_dir)
     print(data)
     tmp = data.sum(axis=0)  # axis=1每一行相加
@@ -50,8 +52,8 @@ def main(args):
     true_seg = np.zeros(data.shape)
     seg_true = np.zeros(data.shape)
     for i in range(data.shape[0]):
-        true_seg[:,i] = np.array(data[:,i]/tmp[i])
-        seg_true[i,:] = np.array(data[i,:]/tmp_1[i])
+        true_seg[:, i] = np.array(data[:, i]/tmp[i])
+        seg_true[i, :] = np.array(data[i, :]/tmp_1[i])
     # # 设置汉字格式print_data
     # # sans-serif就是无衬线字体，是一种通用字体族。
     # # 常见的无衬线字体有 Trebuchet MS, Tahoma, Verdana, Arial, Helvetica,SimHei 中文的幼圆、隶书等等
@@ -84,10 +86,9 @@ def main(args):
     plt.xlabel('Predicted label', fontsize=18)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
-    
+
     plt.savefig('./output/heatmap/'+args.model_name+'_seg_correct.jpg')
     plt.close()
-
 
 
 if __name__ == '__main__':

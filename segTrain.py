@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from datasets.segDataSet import COVID19_SegDataSet
 from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize
-from models.u2net import U2NET, U2NETP
+from models.model import U2NET, U2NETP
 from segConfig import getConfig
 from utils.Metrics import enhanced_mixing_loss
 
@@ -166,21 +166,20 @@ def main(args):
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
-        if best_train_performance[1] > train_loss and train_loss>0 and epoch>30:
+        if best_train_performance[1] > train_loss and train_loss > 0 and epoch > 30:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
                 save_dir, 'best_train_model.pth'.format(epoch)))
             best_train_performance = [epoch, train_loss]
 
-        if best_val_performance[1] > val_loss and val_loss>0 and epoch>30:
+        if best_val_performance[1] > val_loss and val_loss > 0 and epoch > 30:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
                 save_dir, 'best_val_model.pth'.format(epoch)))
             best_val_performance = [epoch, val_loss]
 
-            
         if epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}

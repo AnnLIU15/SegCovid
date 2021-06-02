@@ -51,11 +51,8 @@ def main(args):
     print_data = np.zeros(data.shape)
     for i in range(data.shape[0]):
         print_data[i, :] = np.array(data[i, :]/tmp[i])
-    # # 设置汉字格式print_data
-    # # sans-serif就是无衬线字体，是一种通用字体族。
-    # # 常见的无衬线字体有 Trebuchet MS, Tahoma, Verdana, Arial, Helvetica,SimHei 中文的幼圆、隶书等等
-    # mpl.rcParams['font.sans-serif'] = ['FangSong']  # 指定默认字体
-    # mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+    
+    
     fig, ax = plt.subplots(figsize=(10, 10))
     conf_matrix = pd.DataFrame(
         print_data, index=['b&f', 'lesion'], columns=['b&f', 'lesion'])

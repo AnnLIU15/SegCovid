@@ -1,9 +1,8 @@
 from glob import glob
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
-import numpy as np
-
 
 
 def getTotal(dataset_path, n_classes=3):
@@ -28,12 +27,12 @@ def getImage(dataset_path):
     pic_data = []
     pic_name = []
     length_path = len(dataset_path)+1
-    
+
     for pic in pics:
         pic_ = np.load(pic)
         pic_data.append(pic_)
         pic_name.append(pic[length_path:-4])
-    
+
     return pic_data, pic_name
 
 
@@ -53,7 +52,7 @@ class COVID19_SegDataSetNormalize(Dataset):
         super(COVID19_SegDataSetNormalize, self).__init__()
         self.dataset_path = dataset_path
         self.imgs_data, self.masks_data, self.imgs_name = getTotal(
-            self.dataset_path,n_classes)
+            self.dataset_path, n_classes)
 
     def __getitem__(self, idx):
         return self.imgs_data[idx], self.masks_data[idx]

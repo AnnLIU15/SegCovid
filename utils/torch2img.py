@@ -6,9 +6,9 @@ import numpy as np
 
 def torch2imgs(output):
     shapeOFoutput = output.shape
-    if len(shapeOFoutput) == 3 and shapeOFoutput[0]>1:
+    if len(shapeOFoutput) == 3 and shapeOFoutput[0] > 1:
         imgs_array = output.argmax(dim=0).clone().detach().cpu().numpy()
-    elif len(shapeOFoutput) == 3 and shapeOFoutput[0]==1:
+    elif len(shapeOFoutput) == 3 and shapeOFoutput[0] == 1:
         imgs_array = output.clone().detach().cpu().numpy()
     elif len(shapeOFoutput) == 4:
         imgs_array = np.zeros(
@@ -20,7 +20,7 @@ def torch2imgs(output):
     return imgs_array
 
 
-def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/',npy_type=False):
+def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/', npy_type=False):
     get_numpy = torch2imgs(imgs_array).astype(np.uint8)
 
     shapeofimg = get_numpy.shape
@@ -28,19 +28,19 @@ def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/',npy_type=
         os.mkdir(save_dir)
     if len(shapeofimg) == 3:
         for idx in range(shapeofimg[0]):
-            if isinstance(name_of_imgs[idx],tuple):
-                writer_name=name_of_imgs[idx][0]
+            if isinstance(name_of_imgs[idx], tuple):
+                writer_name = name_of_imgs[idx][0]
             else:
-                writer_name=name_of_imgs[idx]
+                writer_name = name_of_imgs[idx]
             if npy_type:
-                writer_name=writer_name+'.png'
+                writer_name = writer_name+'.png'
             cv2.imwrite(save_dir+'/'+writer_name, get_numpy[idx], [
                         int(cv2.IMWRITE_PNG_COMPRESSION), 0])
     else:
-        if isinstance(name_of_imgs,tuple):
-            name_of_imgs=name_of_imgs[0]
+        if isinstance(name_of_imgs, tuple):
+            name_of_imgs = name_of_imgs[0]
         if npy_type:
-            writer_name=name_of_imgs+'.png'
+            writer_name = name_of_imgs+'.png'
         cv2.imwrite(save_dir+'/'+writer_name, get_numpy,
                     [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
 

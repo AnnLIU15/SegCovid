@@ -43,7 +43,7 @@ def Mereics_score(y_pred, y_true, n_classes=3):
                        n_classes).permute(2, 0, 1)[1:].numpy()
     y_true = F.one_hot(torch.from_numpy(y_true.squeeze()),
                        n_classes).permute(2, 0, 1)[1:].numpy()
-    mAP=0
+    mAP = 0
     for idx in range(y_pred.shape[0]):
 
         prediction = y_pred[idx]
@@ -59,18 +59,18 @@ def Mereics_score(y_pred, y_true, n_classes=3):
             groundtruth, prediction, average='weighted', zero_division=1)
         mereics_dict['f1_score_'+str(idx+1)] = f1_score(
             groundtruth, prediction, average='weighted', zero_division=1)
-        if intersection_area==0:
-            mereics_dict['AP_'+str(idx+1)]=1
+        if intersection_area == 0:
+            mereics_dict['AP_'+str(idx+1)] = 1
         else:
             mereics_dict['AP_'+str(idx+1)] = average_precision_score(
                 groundtruth, prediction, average='weighted')
-        mAP+=mereics_dict['AP_'+str(idx+1)]
-        
+        mAP += mereics_dict['AP_'+str(idx+1)]
+
         mereics_dict['iou_'+str(idx+1)] = (union_area +
                                            1e-5)/(intersection_area+1e-5)
         mereics_dict['dice_coff_' +
                      str(idx+1)] = (2*union_area+1e-5)/(total_area+1e-5)
-    mereics_dict['mAP' ] = mAP/y_pred.shape[0]
+    mereics_dict['mAP'] = mAP/y_pred.shape[0]
     return mereics_dict
 
 

@@ -4,14 +4,15 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
 from torch.utils.data import DataLoader
 from torchsummary import summary
 from tqdm import tqdm
-import torch.nn.functional as F
-from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize_test
+
 from datasets.segDataSet import COVID19_SegDataSet_test
-from models.u2net import U2NET
+from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize_test
+from models.model import U2NET
 from segConfig import getConfig
 from utils.Metrics import Mereics_score
 from utils.torch2img import saveImage
