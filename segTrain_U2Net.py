@@ -108,12 +108,12 @@ def main(args):
     # summary(model,(1, 512, 512))
 
     print('===>Setting optimizer and scheduler')
-    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=9e-4)
+    optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-3)
     ''''''
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(
     #    optimizer, T_max=10, eta_min=1e-5, last_epoch=-1)
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer, T_0=10, eta_min=1e-5, last_epoch=-1, T_mult=2)
+        optimizer, T_0=10, eta_min=1e-6, last_epoch=-1, T_mult=2)
     # logger
     if not os.path.exists('./log/seg/'):
         os.makedirs('./log/seg/')
@@ -149,7 +149,8 @@ def main(args):
 
     print('===>Start Training and Validating')
     print("Start training at epoch = {:d}".format(start_epoch))
-    best_performance = [0, np.Inf]
+    best_train_performance = [0, np.Inf]
+    best_val_performance = [0, np.Inf]
     train_start_time = time.time()
 
     for epoch in range(start_epoch, start_epoch+num_epochs):
@@ -166,20 +167,30 @@ def main(args):
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
-        if best_performance[1] > train_loss and train_loss>0:
+        if best_train_performance[1] > train_loss and train_loss>0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
-                save_dir, 'best_epoch_model.pth'.format(epoch)))
-            best_performance = [epoch, train_loss]
+                save_dir, 'best_train_model.pth'.format(epoch)))
+            best_train_performance = [epoch, train_loss]
 
+        if best_val_performance[1] > val_loss and val_loss>0 and epoch>30:
+            state = {'epoch': epoch, 'model_weights': model.state_dict(
+            ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
+            torch.save(state, os.path.join(
+                save_dir, 'best_val_model.pth'.format(epoch)))
+            best_val_performance = [epoch, val_loss]
+
+            
         if epoch % save_every == 0:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
             torch.save(state, os.path.join(
                 save_dir, 'epoch_{}_model.pth'.format(epoch)))
-        print('Best epoch:%d\t\t\tloss:%.4f' %
-              (best_performance[0], best_performance[1]))
+        print('Best train loss epoch:%d\t\t\tloss:%.4f' %
+              (best_train_performance[0], best_train_performance[1]))
+        print('Best val loss epoch:%d\t\t\tloss:%.4f' %
+              (best_val_performance[0], best_val_performance[1]))
         '''
         tensorboard visualize
         ---------------------

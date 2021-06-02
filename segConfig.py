@@ -1,7 +1,7 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-05-29 16:18:13
+# @Last Modified time: 2021-05-30 16:19:53
 import argparse
 
 
@@ -29,7 +29,7 @@ def getConfig(stage):
         parser_.add_argument("--val_data_dir", type=str, default='./data/seg/test',
                              help="Path to the validation data. Must contain images and binary masks")
         # parser_.add_argument("--batch_size", type=int, default=8, help="Implemented only for batch size = 1")
-        parser_.add_argument("--save_every", type=int, default=5)
+        parser_.add_argument("--save_every", type=int, default=10)
         parser_.add_argument("--lrate", type=float,
                              default=1e-3, help="initial Learning rate")
         parser_.add_argument('--log_name', type=str,

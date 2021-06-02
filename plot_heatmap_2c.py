@@ -21,9 +21,11 @@ def cal_class(masks_dir, out_dir):
     for pic in output_files:
         pic_ = cv2.imread(pic, cv2.IMREAD_GRAYSCALE)
         out_data.append(pic_)
+    out_data=np.array(out_data)
+    out_data = np.where(out_data > 0, 1, 0)
+
     masks_data = np.array(masks_data)
-    masks_data = np.where(masks_data > 0, 1, 0)
-    out_data = np.array(out_data)
+    masks_data = np.where(masks_data > 1, 1, 0)
     cm = confusion_matrix(masks_data.ravel(), out_data.ravel())  # 支持任意类
     # 等同
     # pos_arr=np.zeros(shape=(3,3))
@@ -67,7 +69,7 @@ def main(args):
     plt.yticks(fontsize=18)
     if not os.path.exists('./output/heatmap/'):
         os.mkdir('./output/heatmap/')
-    plt.savefig('./output/heatmap/'+args.model_name+'.jpg')
+    plt.savefig('./output/heatmap/'+args.model_name+'_2c.jpg')
     plt.show()
     plt.close()
 

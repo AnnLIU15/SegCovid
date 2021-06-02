@@ -22,7 +22,7 @@ def cal_class(masks_dir, out_dir):
         pic_ = cv2.imread(pic, cv2.IMREAD_GRAYSCALE)
         out_data.append(pic_)
     masks_data = np.array(masks_data)
-    masks_data = np.where(masks_data > 0, masks_data-1, 0)
+    masks_data = np.where(masks_data > 1, masks_data-1, 0)
     out_data = np.array(out_data)
     cm = confusion_matrix(masks_data.ravel(), out_data.ravel())  # 支持任意类
     # 等同
@@ -46,9 +46,12 @@ def main(args):
     data = cal_class(masks_dir=args.masks_dir, out_dir=out_dir)
     print(data)
     tmp = data.sum(axis=0)  # axis=1每一行相加
-    print_data = np.zeros(data.shape)
+    tmp_1 = data.sum(axis=1)  # axis=1每一行相加
+    true_seg = np.zeros(data.shape)
+    seg_true = np.zeros(data.shape)
     for i in range(data.shape[0]):
-        print_data[:,i] = np.array(data[:,i]/tmp[i])
+        true_seg[:,i] = np.array(data[:,i]/tmp[i])
+        seg_true[i,:] = np.array(data[i,:]/tmp_1[i])
     # # 设置汉字格式print_data
     # # sans-serif就是无衬线字体，是一种通用字体族。
     # # 常见的无衬线字体有 Trebuchet MS, Tahoma, Verdana, Arial, Helvetica,SimHei 中文的幼圆、隶书等等
@@ -56,20 +59,35 @@ def main(args):
     # mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
     fig, ax = plt.subplots(figsize=(10, 10))
     conf_matrix = pd.DataFrame(
-        print_data, index=['bgr+lungs', 'GGO', 'CO'], columns=['bgr+lungs', 'GGO', 'CO'])
+        true_seg, index=['bgr+lungs', 'GGO', 'CO'], columns=['bgr+lungs', 'GGO', 'CO'])
 
     sns.heatmap(conf_matrix, fmt='g', square=True, annot=True,
                 annot_kws={"size": 19}, cmap="Blues")
-    plt.title(args.model_name+'_heatmap_each col equal to 1')
+    plt.title(args.model_name+'_heatmap_each prediction correct percent')
     plt.ylabel('True label', fontsize=18)
     plt.xlabel('Predicted label', fontsize=18)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
     if not os.path.exists('./output/heatmap/'):
         os.mkdir('./output/heatmap/')
-    plt.savefig('./output/heatmap/'+args.model_name+'.jpg')
-    plt.show()
+    plt.savefig('./output/heatmap/'+args.model_name+'_true_seg.jpg')
     plt.close()
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    conf_matrix = pd.DataFrame(
+        seg_true, index=['bgr+lungs', 'GGO', 'CO'], columns=['bgr+lungs', 'GGO', 'CO'])
+
+    sns.heatmap(conf_matrix, fmt='g', square=True, annot=True,
+                annot_kws={"size": 19}, cmap="Blues")
+    plt.title(args.model_name+'_heatmap_each label segmented correct')
+    plt.ylabel('True label', fontsize=18)
+    plt.xlabel('Predicted label', fontsize=18)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    
+    plt.savefig('./output/heatmap/'+args.model_name+'_seg_correct.jpg')
+    plt.close()
+
 
 
 if __name__ == '__main__':

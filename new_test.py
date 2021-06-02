@@ -15,22 +15,25 @@ from datasets.segDataSetNormalize import COVID19_SegDataSetNormalize_test
 from datasets.segDataSet import COVID19_SegDataSet_test
 from models.u2net import U2NET
 from segConfig import getConfig
-from utils.Metrics import Mereics_score, dice_coef
+from utils.new_Metrics import Mereics_score
 from utils.torch2img import saveImage
 
 
 def test(model, test_loader, device, n_classes, save_seg, model_name):
     # total_loss = 0
     total_acc = 0
-    total_dice =0
+    total_ap =0
     total_pre=0
     total_recall=0
     total_f1=0
+    total_iou=0
+    total_dice=0
     model.eval()
     tmp_matrix = np.zeros(shape=(n_classes, n_classes))
 
     with torch.no_grad():
-        for idx, (imgs, masks, imgs_name) in enumerate(test_loader):
+        print('save_dir:',save_seg+'/'+model_name)
+        for idx, (imgs, masks, imgs_name) in tqdm(enumerate(test_loader), desc='test', total=len(test_loader)):
             imgs, masks = imgs.to(device), masks.to(device)
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
             d0, d1, d2, d3, d4, d5, d6 = nn.Softmax(dim=1)(d0),\
@@ -73,26 +76,29 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
                 +d4_tmp*d[4]+d5_tmp*d[5]+d6_tmp*d[6]
             tmp[:, 1:n_classes, :, :] = tmp[:, 1:n_classes, :, :]+add_lesion
             out_mask = tmp.argmax(dim=1)
-            #saveImage(out_mask,imgs_name,save_seg+'/'+model_name,True)
+            saveImage(out_mask,imgs_name,save_seg+'/'+model_name,True)
            
             tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
             ), out_mask.clone().detach().cpu().numpy().ravel(), labels=range(n_classes))
-            dice = dice_coef(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
             order= Mereics_score(out_mask.clone().detach().cpu().numpy(), masks.clone().detach().cpu().numpy())
-            
-            total_dice+=dice
-            total_acc+=order['accuracy']
-            total_pre+=order['precision_score']
-            total_recall+=order['recall_score']
-            total_f1+=order['f1_score']
+            for idx_1 in range(n_classes-1):
+                total_acc+=order['accuracy_'+str(idx_1+1)]
+                total_pre+=order['precision_score_'+str(idx_1+1)]
+                total_recall+=order['recall_score_'+str(idx_1+1)]
+                total_f1+=order['f1_score_'+str(idx_1+1)]
+                total_ap+=order['AP_'+str(idx_1+1)]
+                total_iou+=order['iou_'+str(idx_1+1)]
+                total_dice+=order['dice_coff_' +str(idx_1+1)]
             # total_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
     # avg_loss = total_loss / len(test_loader)
-    avg_dice = total_dice / len(test_loader)
-    avg_acc = total_acc / len(test_loader)
-    avg_pre=total_pre/ len(test_loader)
-    avg_recall=total_recall/ len(test_loader)
-    avg_f1=total_f1/ len(test_loader)
+    mAP = total_ap / len(test_loader)/(n_classes-1)
+    avg_acc = total_acc / len(test_loader)/(n_classes-1)
+    avg_pre=total_pre/ len(test_loader)/(n_classes-1)
+    avg_recall=total_recall/ len(test_loader)/(n_classes-1)
+    avg_f1=total_f1/ len(test_loader)/(n_classes-1)
+    avg_iou=total_iou/ len(test_loader)/(n_classes-1)
+    avg_dice=total_dice/ len(test_loader)/(n_classes-1)
     print('coefficient:',d)
     print('add:', add_lesion)
 
@@ -104,7 +110,7 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
     print(print_data)
 
 
-    return avg_dice,avg_acc,avg_pre,avg_recall,avg_f1
+    return mAP,avg_acc,avg_pre,avg_recall,avg_f1,avg_iou,avg_dice
 
 
 def main(args):
@@ -153,17 +159,17 @@ def main(args):
     test_start_time = time.time()
 
     # avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1=
-    avg_dice,avg_acc,avg_pre,avg_recall,avg_f1=test(model=model, test_loader=test_data_loader, device=device,
+    mAP,avg_acc,avg_pre,avg_recall,avg_f1,avg_iou,avg_dice=test(model=model, test_loader=test_data_loader, device=device,
          n_classes=num_classes, save_seg=save_seg, model_name=model_name)
 
-    print('Test dice:%.4f\t\taccuracy:%.4f\t\tprecision:%.4f\t\trecall:%.4f\t\tf1_score:%.4f'
-            % (avg_dice,avg_acc,avg_pre,avg_recall,avg_f1))
+    print('Test mAP:%.4f\t\taccuracy:%.4f\t\tprecision:%.4f\t\trecall:%.4f\t\tf1_score:%.4f\t\tiou:%.4f\t\tdice:%.4f'
+            % (mAP,avg_acc,avg_pre,avg_recall,avg_f1,avg_iou,avg_dice))
     print('This test total cost %.4fs' % (time.time()-test_start_time))
     with open('log/save_log/'+model_name+'testResult.txt','w') as f:
         print('model_name:',model_name,file=f)
-        print('dice\t\taccuracy\t\tprecision\t\trecall\t\tf1_score',file=f)
-        print('%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f'%
-            (avg_dice,avg_acc,avg_pre,avg_recall,avg_f1),file=f)
+        print('mAP\t\taccuracy\t\tprecision\t\trecall\t\tf1_score\t\tiou\t\tdice:',file=f)
+        print('%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f\t\t%.4f'%
+            (mAP,avg_acc,avg_pre,avg_recall,avg_f1,avg_iou,avg_dice),file=f)
 if __name__ == '__main__':
     args = getConfig('test')
     main(args)

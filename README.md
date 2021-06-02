@@ -12,22 +12,18 @@
 
 ## 分割神经网络模型
 
-| 网络名称            | 位置                          | 原始文章                                                     |
-| ------------------- | ----------------------------- | ------------------------------------------------------------ |
-| UNet                | [U_Net](models/model.py)      | [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597) |
-| RCNN-UNet           | [R2U_Net](models/model.py)    | [Recurrent Residual Convolutional Neural Network based on U-Net (R2U-Net) for Medical Image Segmentation](https://arxiv.org/abs/1802.06955) |
-| Attention Unet      | [AttU_Net](models/model.py)   | [Attention U-Net: Learning Where to Look for the Pancreas](https://arxiv.org/abs/1804.03999) |
-| RCNN-Attention Unet | [R2AttU_Net](models/model.py) | R2U-Net + Attention U-Net                                    |
-| UNet++              | [NestedUNet](models/model.py) | [UNet++: A Nested U-Net Architecture for Medical Image Segmentation](https://arxiv.org/abs/1807.10165) |
-| Unet_dict           | [Unet_dict](models/model.py)  | [Enforcing temporal consistency in Deep Learning segmentation of brain MR images](https://arxiv.org/pdf/1906.07160.pdf) |
+| 网络名称  | 原始文章                                                     |
+| --------- | ------------------------------------------------------------ |
+| $U^2$-Net | [$U^2$-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://arxiv.org/pdf/2005.09007.pdf) |
 
-| 参考代码                                                     |
+| 网络代码                                                     |
 | ------------------------------------------------------------ |
-| [bigmb/Unet-Segmentation-Pytorch-Nest-of-Unets](https://github.com/bigmb/Unet-Segmentation-Pytorch-Nest-of-Unets) |
+| [U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://github.com/xuebinqin/U-2-Net) |
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
-U2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://github.com/xuebinqin/U-2-Net)
-### 分割数据预处理
+
+
+### 1. 数据预处理
 
 in_dir 数据目录，其有子目录imgs与masks
 
@@ -56,13 +52,26 @@ python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True -
 python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --log_name U2Net_n0528-2050 --preTrainedSegModel output/saved_models/U2Net_n/epoch_50_model.pth
 
 python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n/epoch_150_model.pth
+(coefficient: tensor([3.5000, 2.5000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000])
+add: -4.1)
 ```
+
+
+尝试
+
+python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 40 40 --lrate 5e-4 --num_epochs 200
+
+
+
 2类
+
 ```
 python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 160 --weight 1 40
 
 
 python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 40 --lrate 1e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_70_model.pth --log_name U2Net_n_2c0529-2000
+
+python segTest_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n_2c/epoch_70_model.pth
 ```
 
 
@@ -80,6 +89,8 @@ python segTest.py --model_name R2AttU_Net --num_classes 3 --pth ./output/saved_m
 
 ```bash
 python plot_heatmap_3c.py --model_name UNet++ --out_dir output/segResult/UNet++
+
+python plot_heatmap_2c.py --model_name U2Net_n --out_dir output/segResult/
 ```
 
 
