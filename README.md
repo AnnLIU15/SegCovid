@@ -1,4 +1,4 @@
-# 新冠肺炎UNet切割
+# 新冠肺炎切割
 
 ## 运行环境
 
@@ -7,8 +7,6 @@
 | 编程语言 | Python                          |
 | Cuda版本 | 10.0                            |
 | 库       | [requirements](./requirement.txt) |
-
-即将加入dropout层
 
 ## 分割神经网络模型
 
@@ -25,6 +23,25 @@
 
 ### 1. 数据预处理
 
+**根据[test_split_segmentation.txt](./data/test_split_segmentation.txt)与[train_split_segmentation.txt](./data/train_split_segmentation.txt)将图片划分为训练集和测试集**
+
+从[DATASET.md](./data/DATASET.md)中可以知道数据掩膜的灰度值代表意义如下
+
+```pseudocode
+mask中label表示如下(以png文件的灰度值区分)
+	分类			    灰度值
+	背景(BG)			  0
+	肺野(LF)			  1
+	肺磨玻璃影(GGO)      2
+	肺实质(CO)		     3
+```
+
+我们分割的重点在于病灶，即肺磨玻璃影与肺实质，因此将背景和肺野归为一个总体的背景类
+
+
+
+
+
 in_dir 数据目录，其有子目录imgs与masks
 
 out_dir 输出npy数组目录，后续生成子目录imgs与masks+str(n_classes)
@@ -36,66 +53,47 @@ python datasets/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir
 
 
 
-### 分割
+### 分割训练与测试
 
-旧版dataloader
-
-```bash
-python segTrain.py --model_name R2AttU_Net --num_classes 3
-```
-
-新版dataloader3类
+3-classes **Train**
 
 ```
-python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test
+python segTrain.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 20 20 --lrate 3e-4 --num_epochs 200
 
 python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --log_name U2Net_n0528-2050 --preTrainedSegModel output/saved_models/U2Net_n/epoch_50_model.pth
-
-python segTest_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n/epoch_150_model.pth
-(coefficient: tensor([3.5000, 2.5000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000])
-add: -4.1)
 ```
 
-
-尝试
-
-python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 40 40 --lrate 5e-4 --num_epochs 200
-
-
-
-2类
+3-classes **Test**
 
 ```
-python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 160 --weight 1 40
-
-
-python segTrain_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 40 --lrate 1e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_70_model.pth --log_name U2Net_n_2c0529-2000
-
-python segTest_U2Net.py --model_name U2Net_n_2c --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n_2c/epoch_70_model.pth
+ python segTest.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n/1_20_20_2_best_in_150/epoch_150_model.pth
 ```
 
+2-classes **Train**
 
+```
+python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 20 --lrate 3e-4 --num_epochs 200
 
-
-### 测试
-
-```bash
-python segTest.py --model_name R2AttU_Net --num_classes 3 --pth ./output/saved_models/best_epoch_model.pth
+python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 20 --lrate 3e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_150_model.pth --log_name U2Net_n_2c0529-2000
 ```
 
+2-classes **Test**
 
+```
+ python segTest.py --model_name U2Net_n --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output/saved_models/U2Net_n_2c/epoch_70_model.pth
+```
 
 ### 热力图(test中调用不方便)
 
 ```bash
-python plot_heatmap_3c.py --model_name UNet++ --out_dir output/segResult/UNet++
-
 python plot_heatmap_2c.py --model_name U2Net_n --out_dir output/segResult/
 ```
 
-
+### 可视化
 
 ```
-python segTest_U2Net.py --pth output/saved_models/U2Net/best_epoch_model.pth --num_classes 3 --model_name U2Net
+python visualizeSeg.py
 ```
+
+
 
