@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from multiprocessing import Process
 
 from datasets.inferDataSet import infer_DataSet
 from models.model import U2NET
@@ -18,7 +18,7 @@ def infer(model, test_loader, device, n_classes, save_seg):
     model.eval()
 
     with torch.no_grad():
-        for idx, (imgs, imgs_name) in tqdm(enumerate(test_loader), desc='infer', total=len(test_loader)):
+        for idx, (imgs, imgs_name) in enumerate(test_loader):
             imgs = imgs.to(device)
 
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
@@ -82,6 +82,8 @@ def main(args):
     if isinstance(infer_data_dirs, str):
         infer_data_dirs = [infer_data_dirs]
     total_infer_begin = time.time()
+    process_list = []
+
     for idx,infer_data_dir in enumerate(infer_data_dirs):
         imgs_dir = infer_data_dir+'/imgs/'
         masks_save_dir = infer_data_dir+'/masks/'
@@ -96,11 +98,16 @@ def main(args):
         print('===>Infering %d'%(idx+1))
         print('===>Start infer '+imgs_dir)
         print('===>Save to '+masks_save_dir)
-        infer_start_time = time.time()
-        infer(model=model, test_loader=test_data_loader, device=device,
-              n_classes=num_classes, save_seg=masks_save_dir)
-        infer_end_time = time.time()
-        print('Infer cost %.2fs' % (infer_end_time-infer_start_time))
+        process_list.append(Process(target=infer,args=(model,test_data_loader,device,
+              num_classes, masks_save_dir,)))
+        '''
+        多进程参数一定要对应得上！！！
+        if you run multiprocess infer, please pay more attention to the Element position 
+        make it corresponded
+
+        '''
+    for process in process_list:
+        process.start()
     total_infer_end = time.time()
     print('Total Infer cost %.2fs' % (total_infer_end-total_infer_begin))
 

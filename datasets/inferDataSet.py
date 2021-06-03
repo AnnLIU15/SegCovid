@@ -1,5 +1,5 @@
 from glob import glob
-
+import torch
 import numpy as np
 from torch.utils.data import Dataset
 
@@ -21,7 +21,7 @@ class infer_DataSet(Dataset):
         self.imgs_name=sorted(glob(self.dataset_path+'/*.npy'))
 
     def __getitem__(self, idx):
-        return np.load(self.imgs_name[idx]), self.imgs_name[idx][len(self.dataset_path)+1:]
+        return torch.FloatTensor(np.load(self.imgs_name[idx])).unsqueeze(0), self.imgs_name[idx][len(self.dataset_path):]
 
     def __len__(self):
         return len(self.imgs_name)

@@ -1,7 +1,7 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-06-02 21:07:11
+# @Last Modified time: 2021-06-03 08:34:22
 import argparse
 
 
@@ -12,7 +12,7 @@ def getConfig(stage):
     parser_.add_argument("--device", type=str, default='cuda')
     parser_.add_argument("--num_classes", type=int, default=3,
                          help="This refers to the number of classes in the segmentation mode, so either 2 or 3")
-    parser_.add_argument("--model_name", type=str, default='UNet')
+    parser_.add_argument("--model_name", type=str, default='U2Net_n')
     parser_.add_argument('--normalize', type=bool,
                          default=False, help='归一化img')
     if stage == "train":
@@ -49,7 +49,7 @@ def getConfig(stage):
         parser_.add_argument("--pth", type=str, default='./output/saved_models/best_epoch_model.pth',
                              help="训练好的pth路径，模型必须包含以下参数"
                                   "model_weights, optimizer_state, anchor_generator")
-        parser_.add_argument("--infer_data_dir", type=str, nargs='+', default=['/home/e201cv/Desktop/covid_data/process_clf/train',
+        parser_.add_argument("--infer_data_dirs", type=str, nargs='+', default=['/home/e201cv/Desktop/covid_data/process_clf/train',
          '/home/e201cv/Desktop/covid_data/process_clf/val', '/home/e201cv/Desktop/covid_data/process_clf/test'],
                              help="Path to the test data. Must contain images and may contain binary masks")
     model_args = parser_.parse_args()
