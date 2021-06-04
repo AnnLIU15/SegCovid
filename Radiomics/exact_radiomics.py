@@ -1,12 +1,12 @@
 import argparse
+import os
+import time
 from glob import glob
 from multiprocessing import Process
-import os
 
 import cv2
 import numpy as np
 import SimpleITK as sitk
-from numpy.core.fromnumeric import ptp, shape
 from radiomics import featureextractor
 
 
@@ -46,26 +46,27 @@ def extract_radiomics(imgs_path, masks_path, save_path):
     extractor = featureextractor.RadiomicsFeatureExtractor()
     extractor.enableAllImageTypes()
     extractor.enableAllFeatures()
-    kernel=np.ones(shape=(3,3),dtype=np.uint8)
-    print('imgs_path:',imgs_path,'masks_path:',masks_path,
-        '\ntotal pic_:',len(img_names),'save_path:',save_path)
+    kernel = np.ones(shape=(3, 3), dtype=np.uint8)
+    print('imgs_path:', imgs_path, 'masks_path:', masks_path,
+          '\ntotal pic_:', len(img_names), 'save_path:', save_path)
+    start_time = time.time()
     for idx, img_name in enumerate(img_names):
-        save_name=save_path+img_name+'.npy'
+        save_name = save_path+img_name+'.npy'
         if os.path.exists(save_name):
+            print('exist file(continue):', save_name)
             continue
-        np_array_radiomics = np.zeros(shape=(1032),dtype=np.float64)
-        
-        
+        np_array_radiomics = np.zeros(shape=(1032), dtype=np.float64)
+
         masks = np.load(masks_files[idx]).squeeze()
 
         masks = np.where(masks > 0.5, 1, 0)
         # masks_process = masks
 
-       
-        masks_process=cv2.morphologyEx(
-            src=cv2.morphologyEx(src=masks.astype(np.float32),op=cv2.MORPH_OPEN,kernel=kernel),
-            op=cv2.MORPH_CLOSE,kernel=kernel
-            )
+        masks_process = cv2.morphologyEx(
+            src=cv2.morphologyEx(src=masks.astype(
+                np.float32), op=cv2.MORPH_OPEN, kernel=kernel),
+            op=cv2.MORPH_CLOSE, kernel=kernel
+        )
         '''
         by the open and close operation, we filled tiny holes in objects and 
         Eliminate small objects, separate objects in the thin and smooth boundaries of larger objects
@@ -79,26 +80,29 @@ def extract_radiomics(imgs_path, masks_path, save_path):
             sitk_img.SetSpacing((1, 1, 1))
 
             sitk_mask = sitk.GetImageFromArray(masks_process)
-            print(img_name,masks.shape,masks.sum())
+            print(img_name, masks.shape, masks.sum())
             sitk_mask.SetSpacing((1, 1, 1))
             result = extractor.execute(sitk_img, sitk_mask)
             for idx, (_, var) in enumerate(result.items()):
                 if idx > 21:
-                    np_array_radiomics[idx-22]=var
-        ## 保存
-        np.save(save_name,np_array_radiomics)
-            #print(np_array_radiomics)
-            # with open('aaa.txt','w+') as f:
-            #     for idx, (key, var) in enumerate(result.items()):
-            #         if idx > 21:
-            #             print('idx:',idx,'key:',key,'var',var,type(var),var.shape,file=f)
-            #             np_array_radiomics[idx-22]=var
-            # print(np_array_radiomics.dtype)
+                    np_array_radiomics[idx-22] = var
+        # 保存
+        np.save(save_name, np_array_radiomics)
+        # print(np_array_radiomics)
+        # with open('aaa.txt','w+') as f:
+        #     for idx, (key, var) in enumerate(result.items()):
+        #         if idx > 21:
+        #             print('idx:',idx,'key:',key,'var',var,type(var),var.shape,file=f)
+        #             np_array_radiomics[idx-22]=var
+        # print(np_array_radiomics.dtype)
 
+    end_time = time.time()
+    print('total cost %ds' % (end_time-start_time))
 
 
 def main(args):
-    multi_process_extract_radiomics(args.imgs_dir, args.masks_dir, args.out_dir,)
+    multi_process_extract_radiomics(
+        args.imgs_dir, args.masks_dir, args.out_dir,)
 
 
 if __name__ == '__main__':
