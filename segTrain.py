@@ -76,8 +76,8 @@ def val(model, train_loader, device, weight, num_classes):
 def main(args):
     device, lrate, num_classes, num_epochs, log_name, batch_size, weight, model_name =\
         args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size, args.weight, args.model_name
-    preTrainedSegModel, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
-        args.preTrainedSegModel, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
+    pth, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
+        args.pth, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
     normalize = args.normalize
     save_dir = save_dir+'/'+model_name
     if not os.path.exists(save_dir):
@@ -117,9 +117,9 @@ def main(args):
     if not os.path.exists('./log/seg/'):
         os.makedirs('./log/seg/')
 
-    if not preTrainedSegModel == None:
+    if not pth == None:
         print('===>Loading Pretrained Model')
-        checkpoint = torch.load(preTrainedSegModel)
+        checkpoint = torch.load(pth)
         model.load_state_dict(checkpoint['model_weights'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         scheduler.load_state_dict(checkpoint['scheduler'])
