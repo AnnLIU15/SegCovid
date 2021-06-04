@@ -1,14 +1,14 @@
 # @Author: ZhaoYang
 # @Date:   2021-04-23 18:58:51
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-06-04 19:09:05
+# @Last Modified time: 2021-06-04 19:32:18
 import argparse
 
 
 def getConfig(stage):
     parser_ = argparse.ArgumentParser(
         description='训练的参数')
-    parser_.add_argument("--pth", type=str, default='./output/saved_models/best_epoch_model.pth',
+    parser_.add_argument("--pth", type=str, default=None,
                              help="训练好的pth路径，模型必须包含以下参数"
                                   "model_weights, optimizer_state")
     parser_.add_argument("--device", type=str, default='cuda')
