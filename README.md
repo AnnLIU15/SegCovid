@@ -58,7 +58,7 @@ python ./utils/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir 
 ```
 python segTrain.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 20 20 --lrate 3e-4 --num_epochs 200
 
-python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --log_name U2Net_n0528-2050 --preTrainedSegModel output/saved_models/U2Net_n/epoch_50_model.pth
+python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --log_name U2Net_n0528-2050 --pth output/saved_models/U2Net_n/epoch_50_model.pth
 ```
 
 3-classes **Test**
@@ -72,7 +72,7 @@ python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True -
 ```
 python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --weight 1 20 --lrate 3e-4 --num_epochs 200
 
-python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 20 --lrate 3e-4 --preTrainedSegModel output/saved_models/U2Net_n_2c/epoch_150_model.pth --log_name U2Net_n_2c0529-2000
+python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --batch_size 4 --train_data_dir ./data/seg/process/train --val_data_dir ./data/seg/process/test --num_epochs 100 --weight 1 20 --lrate 3e-4 --pth output/saved_models/U2Net_n_2c/epoch_150_model.pth --log_name U2Net_n_2c0529-2000
 ```
 
 2-classes **Test**
