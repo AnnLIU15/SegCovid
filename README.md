@@ -116,3 +116,8 @@ python ./utils/preprocessClf.py --in_dir /home/e201cv/Desktop/covid_data/clf/tra
 ```
 python infer.py --infer_data_dirs /home/e201cv/Desktop/covid_data/process_clf/train /home/e201cv/Desktop/covid_data/process_clf/val /home/e201cv/Desktop/covid_data/process_clf/test --pth output/saved_models/U2Net_n/1_20_20_2_best_in_150/epoch_150_model.pth --num_classes 3 --device cuda
 ```
+
+#### 获取影像组学
+```
+python Radiomics/exact_radiomics.py --imgs_dir data/clf/train/imgs data/clf/val/imgs data/clf/test/imgs --masks_dir data/clf/train/masks data/clf/val/masks data/clf/test/masks --out_dir data/clf/train/radiomics data/clf/val/radiomics data/clf/test/radiomics
+```

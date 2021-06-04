@@ -50,7 +50,7 @@ def infer(model, test_loader, device, n_classes, save_seg):
                 + d4_tmp*d[4]+d5_tmp*d[5]+d6_tmp*d[6]
             tmp[:, 1:n_classes, :, :] = tmp[:, 1:n_classes, :, :]+add_lesion
 
-            out_mask = tmp.argmax(dim=1)[0]
+            out_mask = tmp.argmax(dim=1).squeeze()
             np.save(save_seg+'/'+imgs_name[0],
                     out_mask.clone().detach().cpu().numpy().astype(np.uint8).squeeze())
             torch.cuda.empty_cache()
