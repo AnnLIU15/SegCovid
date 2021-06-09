@@ -19,9 +19,12 @@ def PreImg(imgs_data):
 
     imgs_data = np.where(imgs_data < idx_0_005, idx_0_005, imgs_data)
     imgs_data = np.where(imgs_data > idx_0_995, idx_0_995, imgs_data)
-
-    imgs_data = (imgs_data-imgs_data.mean())/imgs_data.std()  # z-score
+    imgs_data=np.array(imgs_data,dtype=np.uint8)
+    # imgs_data = (imgs_data-imgs_data.mean())/imgs_data.std()  # z-score
+    # 注意z-score会使得数据从uint8转为float64 1B->8B，内存不够慎用
+    # 但是z-score可以提升效果
     return imgs_data
+
 
 
 def imgs_normalize(in_dir, out_dir):

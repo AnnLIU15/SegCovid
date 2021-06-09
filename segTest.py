@@ -153,7 +153,7 @@ def main(args):
     To display the model, please uncomment the next sentence
     '''
     # print('===>Display model')
-    #summary(model, (1, 512, 512))
+    # summary(model, (1, 512, 512))
     # print('===>Start Testing')
     test_start_time = time.time()
 

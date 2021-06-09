@@ -48,8 +48,8 @@ This is the dataset used in KISEG: A Three-Stage Segmentation Framework for Mult
 总结
 
 ```text
-数据集有150张CT切片(image和mask视为一张)，image与mask的子文件夹以患者为分类，image与mask的数据一一对应
-
+数据集有750张CT切片(image和mask视为一张)，image与mask的子文件夹以患者为分类，image与mask的数据一一对应
+图像切片皆来自于新冠肺炎患者
 image图片格式为*.jpg，mask图片格式为*.png
 
 mask中label表示如下(以png文件的灰度值区分)
@@ -57,7 +57,7 @@ mask中label表示如下(以png文件的灰度值区分)
 	背景			0
 	肺野			1
 	肺磨玻璃影     2
-	肺实质		   3
+	肺实变		   3
 ```
 
 

@@ -42,7 +42,9 @@ def extract_radiomics(imgs_path, masks_path, save_path):
     img_names = [var[len(imgs_path):-4] for var in img_files]
     masks_files = sorted(glob(masks_path+'/*.npy'))
     masks_names = [var[len(masks_path):-4] for var in masks_files]
+    assert len(img_names) == len(masks_names), '图像不对应'
     assert img_names == masks_names, '图像不对应'
+    
     extractor = featureextractor.RadiomicsFeatureExtractor()
     extractor.enableAllImageTypes()
     extractor.enableAllFeatures()

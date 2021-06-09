@@ -3,7 +3,7 @@
 import os
 from glob import glob
 import argparse
-
+from tqdm import tqdm
 import matplotlib
 import numpy as np
 import cv2
@@ -31,7 +31,7 @@ def main(args):
     labels = sorted(glob(labeldir+"/*.png"))
     outputs= sorted(glob(outputdir+"/*.png"))
 
-    for idx,label in enumerate(labels):
+    for idx,label in tqdm(enumerate(labels),desc='processing',total=len(labels)):
         img=imgs[idx]
         output=outputs[idx]
         assert output[len(outputdir)+1:]==label[len(labeldir)+1:],"图片不匹配\t"+output[len(outputdir):]+'\t'+label[len(labeldir):]
@@ -62,8 +62,8 @@ if __name__ == '__main__':
     parser_ = argparse.ArgumentParser()
     parser_.add_argument('--imgsdir', type=str,default='data/seg/test/imgs')
     parser_.add_argument('--labeldir', type=str,default='data/seg/test/masks')
-    parser_.add_argument('--outputdir', type=str, default='output/segResult/U2Net_n')
-    parser_.add_argument('--save_visualize_dir', type=str,default='output/segResult/U2Net_visualize')
+    parser_.add_argument('--outputdir', type=str, default='output/segResult/U2Net')
+    parser_.add_argument('--save_visualize_dir', type=str,default='output/segResult/U2Net_wn_visualize')
     parser_.add_argument('--n_classes', type=int, default=3)
     args = parser_.parse_args()
 

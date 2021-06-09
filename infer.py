@@ -20,7 +20,6 @@ def infer(model, test_loader, device, n_classes, save_seg):
     with torch.no_grad():
         for idx, (imgs, imgs_name) in tqdm(enumerate(test_loader), desc='infer', total=len(test_loader)):
             imgs = imgs.to(device)
-
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
             d0, d1, d2, d3, d4, d5, d6 = nn.Softmax(dim=1)(d0),\
                 nn.Softmax(dim=1)(d1), nn.Softmax(dim=1)(d2),\
@@ -101,6 +100,7 @@ def main(args):
               n_classes=num_classes, save_seg=masks_save_dir)
         infer_end_time = time.time()
         print('Infer cost %.2fs' % (infer_end_time-infer_start_time))
+        del test_data_loader
     total_infer_end = time.time()
     print('Total Infer cost %.2fs' % (total_infer_end-total_infer_begin))
 

@@ -2,7 +2,7 @@
 
 ## 运行环境
 
-| Version  | v2.0    20210602             |
+| Version  | v3.0    20210605             |
 | -------- | ------------------------------- |
 | 编程语言 | Python                          |
 | Cuda版本 | 10.0                            |
@@ -46,10 +46,12 @@ out_dir 输出npy数组目录，后续生成子目录imgs与masks+str(n_classes)
 ```bash
 python ./utils/rename_seg_pic.py
 python ./utils/preprocessSeg.py --in_dir data/seg/train/ --n_classes 3 --out_dir data/seg/process/train/
+python ./utils/preprocessSeg.py --in_dir data/seg/train/ --n_classes 2 --out_dir data/seg/process/train/
 python ./utils/preprocessSeg.py --in_dir data/seg/test/ --n_classes 3 --out_dir data/seg/process/test/
+python ./utils/preprocessSeg.py --in_dir data/seg/test/ --n_classes 2 --out_dir data/seg/process/test/
 ```
 
-
+**注意！！！如果内存不够不要开z-score！！！分类网络有62000张图，开了z-score需要128G memory<br>but it can improve perfermance**
 
 ### 2. 分割训练与测试
 
