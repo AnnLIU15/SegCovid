@@ -9,10 +9,10 @@ def imgs_uint8(data_path):
     files = glob(data_path+'/*.npy')
     print('begin process ', data_path)
     for file in files:
-        pic_=np.load(file)
-        
-        pic_=pic_.astype(np.uint8)
-        np.save(file,pic_)
+        pic_ = np.load(file)
+
+        pic_ = pic_.astype(np.uint8)
+        np.save(file, pic_)
     print('end process ', data_path)
 
 
@@ -22,7 +22,7 @@ def main(args):
         in_dir = [in_dir]
     process_list = []
     for idx, _ in enumerate(in_dir):
-        process_list.append(Process(target=imgs_uint8,args=(in_dir[idx],)))
+        process_list.append(Process(target=imgs_uint8, args=(in_dir[idx],)))
     for process in process_list:
         process.start()
 

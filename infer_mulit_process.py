@@ -1,12 +1,12 @@
 import os
 import time
+from multiprocessing import Process
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from multiprocessing import Process
 
 from datasets.inferDataSet import infer_DataSet
 from models.model import U2NET
@@ -84,7 +84,7 @@ def main(args):
     total_infer_begin = time.time()
     process_list = []
 
-    for idx,infer_data_dir in enumerate(infer_data_dirs):
+    for idx, infer_data_dir in enumerate(infer_data_dirs):
         imgs_dir = infer_data_dir+'/imgs/'
         masks_save_dir = infer_data_dir+'/masks/'
         if not os.path.exists(masks_save_dir):
@@ -95,11 +95,11 @@ def main(args):
             dataset=SegDataSet(imgs_dir), batch_size=1,
             num_workers=8, shuffle=False, drop_last=False)
         print('='*30)
-        print('===>Infering %d'%(idx+1))
+        print('===>Infering %d' % (idx+1))
         print('===>Start infer '+imgs_dir)
         print('===>Save to '+masks_save_dir)
-        process_list.append(Process(target=infer,args=(model,test_data_loader,device,
-              num_classes, masks_save_dir,)))
+        process_list.append(Process(target=infer, args=(model, test_data_loader, device,
+                                                        num_classes, masks_save_dir,)))
         '''
         多进程参数一定要对应得上！！！
         if you run multiprocess infer, please pay more attention to the Element position

@@ -2,7 +2,7 @@
 # @Author: Your name
 # @Date:   2020-12-08 23:48:30
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-05-29 16:16:39
+# @Last Modified time: 2021-06-11 19:29:48
 
 import os
 
@@ -33,21 +33,22 @@ class BatchRenamePics(object):
                     scr = os.path.join(dirpath, each)
                     # 拼接新的完整的包含路径的文件名, tail是文件夹的名字
                     if 'NCP' in each:
-                        aaa=each.replace('NCP','2')
+                        aaa = each.replace('NCP', '2')
                     elif 'CP' in each:
-                        aaa=each.replace('CP','1')
+                        aaa = each.replace('CP', '1')
                     elif 'Normal' in each:
-                        aaa=each.replace('Normal','0')
-                    dst = os.path.join(dirpath,  aaa )
+                        aaa = each.replace('Normal', '0')
+                    dst = os.path.join(dirpath,  aaa)
                     try:
                         # 重命名图片文件
-                        #print(scr,dst)
+                        # print(scr,dst)
                         os.rename(scr, dst)
                     except:
                         continue
                 else:
                     continue
         print('累计重命名{}张图片'.format(j))
+
 
 if __name__ == '__main__':
     # 设置起始路径path

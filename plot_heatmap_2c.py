@@ -1,11 +1,11 @@
 import argparse
-from glob import glob
 import os
+from glob import glob
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pylab as mpl  # import matplotlib as mpl
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 
@@ -21,7 +21,7 @@ def cal_class(masks_dir, out_dir):
     for pic in output_files:
         pic_ = cv2.imread(pic, cv2.IMREAD_GRAYSCALE)
         out_data.append(pic_)
-    out_data=np.array(out_data)
+    out_data = np.array(out_data)
     out_data = np.where(out_data > 0, 1, 0)
 
     masks_data = np.array(masks_data)
@@ -43,16 +43,16 @@ def cal_class(masks_dir, out_dir):
 
 
 def main(args):
-    out_dir=args.out_dir+('/'+args.model_name if not args.model_name in args.out_dir else '')
-    print('out_dir:',out_dir)
+    out_dir = args.out_dir + \
+        ('/'+args.model_name if not args.model_name in args.out_dir else '')
+    print('out_dir:', out_dir)
     data = cal_class(masks_dir=args.masks_dir, out_dir=out_dir)
     print(data)
     tmp = data.sum(axis=1)  # axis=1每一行相加
     print_data = np.zeros(data.shape)
     for i in range(data.shape[0]):
         print_data[i, :] = np.array(data[i, :]/tmp[i])
-    
-    
+
     fig, ax = plt.subplots(figsize=(10, 10))
     conf_matrix = pd.DataFrame(
         print_data, index=['b&f', 'lesion'], columns=['b&f', 'lesion'])

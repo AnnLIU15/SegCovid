@@ -81,7 +81,7 @@ def main(args):
     if isinstance(infer_data_dirs, str):
         infer_data_dirs = [infer_data_dirs]
     total_infer_begin = time.time()
-    for idx,infer_data_dir in enumerate(infer_data_dirs):
+    for idx, infer_data_dir in enumerate(infer_data_dirs):
         imgs_dir = infer_data_dir+'/imgs/'
         masks_save_dir = infer_data_dir+'/masks/'
         if not os.path.exists(masks_save_dir):
@@ -92,7 +92,7 @@ def main(args):
             dataset=SegDataSet(imgs_dir), batch_size=1,
             num_workers=8, shuffle=False, drop_last=False)
         print('='*30)
-        print('===>Infering %d'%(idx+1))
+        print('===>Infering %d' % (idx+1))
         print('===>Start infer '+imgs_dir)
         print('===>Save to '+masks_save_dir)
         infer_start_time = time.time()

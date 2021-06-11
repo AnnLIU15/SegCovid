@@ -17,7 +17,7 @@ def PreImg(imgs_data):
         >>> len(b)
         2097152
     '''
-    idx=len(imgs_data_copy)
+    idx = len(imgs_data_copy)
     '''
     imgs_data_shape = imgs_data.shape
     idx = 1
@@ -41,7 +41,7 @@ def PreImg(imgs_data):
 
     imgs_data = np.where(imgs_data < idx_0_005, idx_0_005, imgs_data)
     imgs_data = np.where(imgs_data > idx_0_995, idx_0_995, imgs_data)
-    imgs_data=np.array(imgs_data,dtype=np.uint8)
+    imgs_data = np.array(imgs_data, dtype=np.uint8)
     # imgs_data = (imgs_data-imgs_data.mean())/imgs_data.std()  # z-score
     # 注意z-score会使得数据从uint8转为float64 1B->8B，内存不够慎用
 
@@ -56,7 +56,7 @@ def PreMask(mask_data, n_classes=3):
         output = np.where(mask_data > 1.5, mask_data-1, 0)
     elif n_classes == 4:
         output = mask_data
-    return np.array(output,dtype=np.uint8)
+    return np.array(output, dtype=np.uint8)
 
 
 def getTotal(dataset_path, n_classes=3, normalize=True):
