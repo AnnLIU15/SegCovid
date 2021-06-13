@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+'''
+U2Net的一些组件
+'''
 
 class REBNCONV(nn.Module):
     def __init__(self, in_channels=1, out_channels=3, dirate=1):

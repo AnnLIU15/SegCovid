@@ -7,6 +7,9 @@ import numpy as np
 
 
 def PreImg(imgs_data):
+    '''
+    预处理图片，去除前后0.5%极端值，已完成z-score，可取消备注
+    '''
     imgs_data_copy = sorted(imgs_data.copy().reshape(-1))
 
     '''
@@ -49,7 +52,7 @@ def PreImg(imgs_data):
 
 
 def PreMask(mask_data, n_classes=3):
-
+    # 转为合适的Masks
     if n_classes == 2:
         output = np.where(mask_data > 1.5, 1, 0)
     elif n_classes == 3:

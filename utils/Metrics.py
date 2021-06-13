@@ -9,19 +9,24 @@ from sklearn.metrics import (accuracy_score, average_precision_score, f1_score,
 
 
 def enhanced_mixing_loss(y_pred, y_true, weight, device='cuda', alpha=0.5, n_classes=3):
+    '''
+    混合损失函数 loss = alpha*nn.CrossEntropyLoss(weight)+(1-alpha)*dice_loss
+    '''
+
     smooth = 1.
+    # one-hot编码
     y_true_reshape = F.one_hot(
         y_true, n_classes).permute(0, 3, 1, 2).reshape(-1)
+    # 转为1维
     y_pred_reshape = y_pred.reshape(-1)
     # dice loss
-    intersection = (y_true_reshape * y_pred_reshape).sum()
-    union = (y_true_reshape + y_pred_reshape).sum()
-    dice_loss = 1-(2. * intersection + smooth) / (union + smooth)
-    cel_loss = nn.CrossEntropyLoss(
-        weight=torch.Tensor(weight).to(device))(y_pred, y_true)
+    intersection = (y_true_reshape * y_pred_reshape).sum()          # 交集
+    union = (y_true_reshape + y_pred_reshape).sum()                 # 并集
+    dice_loss = 1-(2. * intersection + smooth) / (union + smooth)   # dice loss
+    cel_loss = nn.CrossEntropyLoss(                         
+        weight=torch.Tensor(weight).to(device))(y_pred, y_true)     # 交叉熵
     # # focal loss
     # y_pred = torch.clamp(y_pred, epsilon)
-
     # pt_1 = torch.where(y_true==1, y_pred, torch.ones_like(y_pred)).float()
     # pt_0 = torch.where(y_true==0, y_pred, torch.zeros_like(y_pred)).float()
     # focal_loss = -torch.mean(alpha * torch.pow(1. - pt_1, gamma) * torch.log(pt_1)) - \
@@ -30,14 +35,17 @@ def enhanced_mixing_loss(y_pred, y_true, weight, device='cuda', alpha=0.5, n_cla
 
 
 def Mereics_score(y_pred, y_true, n_classes=3):
-    import warnings
-    warnings.filterwarnings("ignore")
-    """
+    '''
+    评估性能表现
     Getting the score of model, include these element
     accuracy, sensitivity, Specificity, precision F1-score
     AP, dice, iou and mAP
     more Mereics_score will append in the future
-    """
+    '''
+    import warnings
+    # 忽略0为底
+    warnings.filterwarnings("ignore")
+    
     mereics_dict = OrderedDict()
     y_pred = F.one_hot(torch.from_numpy(y_pred.squeeze()),
                        n_classes).permute(2, 0, 1)[1:].numpy()
@@ -51,14 +59,19 @@ def Mereics_score(y_pred, y_true, n_classes=3):
         union_area = ((prediction*groundtruth) > 0).sum()
         intersection_area = ((prediction+groundtruth) > 0).sum()
         total_area = (prediction > 0).sum()+(groundtruth > 0).sum()
+        # acc
         mereics_dict['accuracy_' +
                      str(idx+1)] = accuracy_score(groundtruth, prediction)
+        # precision
         mereics_dict['precision_score_'+str(idx+1)] = precision_score(
             groundtruth, prediction, average='weighted', zero_division=1)
+        # recall
         mereics_dict['recall_score_'+str(idx+1)] = recall_score(
             groundtruth, prediction, average='weighted', zero_division=1)
+        # f1
         mereics_dict['f1_score_'+str(idx+1)] = f1_score(
             groundtruth, prediction, average='weighted', zero_division=1)
+        # AP
         if intersection_area == 0:
             mereics_dict['AP_'+str(idx+1)] = 1
         else:

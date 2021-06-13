@@ -11,6 +11,9 @@ from radiomics import featureextractor
 
 
 def multi_process_extract_radiomics(imgs_path, masks_path, save_path):
+    '''
+    多线程影像组学处理
+    '''
     if isinstance(imgs_path, str):
         imgs_path = [imgs_path]
     if isinstance(masks_path, str):
@@ -80,12 +83,13 @@ def extract_radiomics(imgs_path, masks_path, save_path):
             imgs = np.load(img_files[idx])
             sitk_img = sitk.GetImageFromArray(imgs)
             sitk_img.SetSpacing((1, 1, 1))
-
+            # 转为图片输入
             sitk_mask = sitk.GetImageFromArray(masks_process)
             print(img_name, masks.shape, masks.sum())
             sitk_mask.SetSpacing((1, 1, 1))
             result = extractor.execute(sitk_img, sitk_mask)
             for idx, (_, var) in enumerate(result.items()):
+                # 去除图片的固有属性
                 if idx > 21:
                     np_array_radiomics[idx-22] = var
         # 保存

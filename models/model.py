@@ -6,7 +6,9 @@ from .layer import *
 
 ##### U^2-Net ####
 class U2NET(nn.Module):
-
+    '''
+    详细见U2Net论文(md中有链接)
+    '''
     def __init__(self, in_channels=1, out_channels=3):
         super(U2NET, self).__init__()
 

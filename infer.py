@@ -106,5 +106,9 @@ def main(args):
 
 
 if __name__ == '__main__':
+    '''
+    推断，没有做性能评估，只需加载imgs，代码几乎与segTest一致，如有不懂
+    请看segTest注释
+    '''
     args = getConfig('infer')
     main(args)

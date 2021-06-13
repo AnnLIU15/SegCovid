@@ -8,6 +8,9 @@ from tqdm import tqdm
 
 
 def PreImg(imgs_data):
+    '''
+    处理图片，详细见utils/preprocessSeg.py
+    '''
     imgs_data_copy = sorted(imgs_data.copy().reshape(-1))
     imgs_data_shape = imgs_data.shape
     idx = 1

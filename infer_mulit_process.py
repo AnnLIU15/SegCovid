@@ -113,5 +113,8 @@ def main(args):
 
 
 if __name__ == '__main__':
+    '''
+    infer的多线程版本
+    '''
     args = getConfig('infer')
     main(args)

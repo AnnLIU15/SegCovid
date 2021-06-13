@@ -19,30 +19,29 @@ from utils.save_result import saveImage
 
 
 def test(model, test_loader, device, n_classes, save_seg, model_name):
-    # total_loss = 0
-    total_acc = 0
-    total_ap = 0
-    total_pre = 0
-    total_recall = 0
-    total_f1 = 0
-    total_iou = 0
-    total_dice = 0
+    # 性能指标
+    total_acc, total_ap, total_pre, total_recall, total_f1, total_iou, total_dice = 0, 0, 0, 0, 0, 0, 0
+    # 固定参数
     model.eval()
-    tmp_matrix = np.zeros(shape=(n_classes, n_classes))
+    tmp_confusion_matrix = np.zeros(shape=(n_classes, n_classes))
+    # 加权和参数
+    d = torch.Tensor([3.5, 2.5, 1, 1, 1, 1, 1])
+    add_lesion = -4.1
+    print('coefficient:', d)
+    print('add:', add_lesion)
 
     with torch.no_grad():
         print('save_dir:', save_seg+'/'+model_name)
         for idx, (imgs, masks, imgs_name) in tqdm(enumerate(test_loader), desc='test', total=len(test_loader)):
             imgs, masks = imgs.to(device), masks.to(device)
+            # 获取输出
             d0, d1, d2, d3, d4, d5, d6 = model(imgs)
+            # 转为概率
             d0, d1, d2, d3, d4, d5, d6 = nn.Softmax(dim=1)(d0),\
                 nn.Softmax(dim=1)(d1), nn.Softmax(dim=1)(d2),\
                 nn.Softmax(dim=1)(d3), nn.Softmax(dim=1)(d4),\
                 nn.Softmax(dim=1)(d5), nn.Softmax(dim=1)(d6)
-            # d0, d1, d2, d3, d4, d5, d6 = d0[:, 1:n_classes, :, :]*1.01,\
-            #     d1[:, 1:n_classes, :, :]*1.01, d2[:, 1:n_classes, :, :]*1.01,\
-            #     d3[:, 1:n_classes, :, :]*1.01, d4[:, 1:n_classes, :, :]*1.01,\
-            #     d5[:, 1:n_classes, :, :]*1.01, d6[:, 1:n_classes, :, :]*1.01
+            # one-hot独热编码,找最佳权值
             d0_tmp = F.one_hot(d0.clone().argmax(
                 dim=1), n_classes).permute(0, 3, 1, 2)
             d1_tmp = F.one_hot(d1.clone().argmax(
@@ -67,17 +66,21 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
             # for 2-classes
             # d=torch.Tensor([1,1,1,1,1,0,0,0])
             # add_lesion = -4.1
-            d = torch.Tensor([3.5, 2.5, 1, 1, 1, 1, 1])
-            add_lesion = -4.1
-
-            tmp = d0_tmp*d[0]+d1_tmp*d[1]+d2_tmp*d[2]+d3_tmp*d[3]\
+            
+            # 加权和
+            d_weighted_sum = d0_tmp*d[0]+d1_tmp*d[1]+d2_tmp*d[2]+d3_tmp*d[3]\
                 + d4_tmp*d[4]+d5_tmp*d[5]+d6_tmp*d[6]
-            tmp[:, 1:n_classes, :, :] = tmp[:, 1:n_classes, :, :]+add_lesion
-            out_mask = tmp.argmax(dim=1)
+            d_weighted_sum[:, 1:n_classes, :, :] = d_weighted_sum[:, 1:n_classes, :, :]+add_lesion
+            
+            # 获取加权和后取最大概率值并保存
+            out_mask = d_weighted_sum.argmax(dim=1)
             saveImage(out_mask, imgs_name, save_seg+'/'+model_name, True)
 
-            tmp_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
+            # 混淆矩阵
+            tmp_confusion_matrix += confusion_matrix(masks.clone().detach().cpu().numpy().ravel(
             ), out_mask.clone().detach().cpu().numpy().ravel(), labels=range(n_classes))
+            
+            # 指标
             order = Mereics_score(out_mask.clone().detach().cpu(
             ).numpy(), masks.clone().detach().cpu().numpy())
             for idx_1 in range(n_classes-1):
@@ -88,9 +91,9 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
                 total_ap += order['AP_'+str(idx_1+1)]
                 total_iou += order['iou_'+str(idx_1+1)]
                 total_dice += order['dice_coff_' + str(idx_1+1)]
-            # total_loss += loss.clone().detach().cpu().numpy()
             torch.cuda.empty_cache()
-    # avg_loss = total_loss / len(test_loader)
+
+    # 平均每个图片的指标
     mAP = total_ap / len(test_loader)/(n_classes-1)
     avg_acc = total_acc / len(test_loader)/(n_classes-1)
     avg_pre = total_pre / len(test_loader)/(n_classes-1)
@@ -98,15 +101,16 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
     avg_f1 = total_f1 / len(test_loader)/(n_classes-1)
     avg_iou = total_iou / len(test_loader)/(n_classes-1)
     avg_dice = total_dice / len(test_loader)/(n_classes-1)
-    print('coefficient:', d)
-    print('add:', add_lesion)
-
-    print(tmp_matrix)
-    tmp = tmp_matrix.sum(axis=0)  # axis=1每一行相加
-    print_data = np.zeros(tmp_matrix.shape)
-    for i in range(tmp_matrix.shape[0]):
-        print_data[:, i] = np.array(tmp_matrix[:, i]/tmp[i])
-    print(print_data)
+    
+    print('confusion_matrix:')
+    print(tmp_confusion_matrix)
+    confusion_col_sum = tmp_confusion_matrix.sum(axis=0)  # axis=1每一行相加
+    confusion_acc = np.zeros(tmp_confusion_matrix.shape)
+    # 准确率混淆矩阵
+    for i in range(tmp_confusion_matrix.shape[0]):
+        confusion_acc[:, i] = np.array(tmp_confusion_matrix[:, i]/confusion_col_sum[i])
+    print('confusion_acc_matrix:')
+    print(confusion_acc)
 
     return mAP, avg_acc, avg_pre, avg_recall, avg_f1, avg_iou, avg_dice
 
@@ -114,7 +118,7 @@ def test(model, test_loader, device, n_classes, save_seg, model_name):
 def main(args):
     device, num_classes, pth, save_seg, test_data_dir, model_name, normalize = \
         args.device, args.num_classes, args.pth, args.save_seg, args.test_data_dir, args.model_name, args.normalize
-
+    # 掩膜输出位置
     if not os.path.exists(save_seg):
         os.makedirs(save_seg)
     # ng = torch.cuda.device_count()
@@ -156,13 +160,14 @@ def main(args):
     # print('===>Start Testing')
     test_start_time = time.time()
 
-    # avg_loss,avg_dice,avg_acc,avg_pre,avg_recall,avg_f1=
+    # 测试
     mAP, avg_acc, avg_pre, avg_recall, avg_f1, avg_iou, avg_dice = test(model=model, test_loader=test_data_loader, device=device,
                                                                         n_classes=num_classes, save_seg=save_seg, model_name=model_name)
-
+    # 输出测试性能指标结果
     print('Test mAP:%.4f\t\taccuracy:%.4f\t\tprecision:%.4f\t\trecall:%.4f\t\tf1_score:%.4f\t\tiou:%.4f\t\tdice:%.4f'
           % (mAP, avg_acc, avg_pre, avg_recall, avg_f1, avg_iou, avg_dice))
     print('This test total cost %.4fs' % (time.time()-test_start_time))
+    # 保存测试性能指标结果
     with open('log/save_log/'+model_name+'testResult.txt', 'w') as f:
         print('model_name:', model_name, file=f)
         print('mAP\t\taccuracy\t\tprecision\t\trecall\t\tf1_score\t\tiou\t\tdice:', file=f)
@@ -171,5 +176,8 @@ def main(args):
 
 
 if __name__ == '__main__':
+    '''
+    测试流程与训练一致,如有不懂请对照segTrain观看
+    '''
     args = getConfig('test')
     main(args)

@@ -2,7 +2,7 @@
 # @Author: Your name
 # @Date:   2020-12-08 23:48:30
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-06-02 17:12:33
+# @Last Modified time: 2021-06-13 16:02:34
 
 import argparse
 import os
@@ -11,7 +11,10 @@ from glob import glob
 
 
 class BatchRenamePics(object):
-
+    '''
+    批量重命名seg图片-> 患者ID_slicerNum.png/jpg
+    并且划分好数据集
+    '''
     def __init__(self, path, save_path, train_txt, test_txt):
         super(BatchRenamePics, self).__init__()
         # 设置起始路径path
@@ -21,6 +24,9 @@ class BatchRenamePics(object):
         self.test_txt = test_txt
 
     def _divide(self):
+        '''
+        本函数用于将数据集通过已有txt划分到对应位置
+        '''
         folder = [self.save_path+'/'+var for var in os.listdir(
             self.save_path) if ('mask' in var) or ('img' in var)]
         to_path = [self.save_path+'/train', self.save_path+'/test']
@@ -62,6 +68,9 @@ class BatchRenamePics(object):
                         continue
 
     def rename_divide_preprocess(self):
+        '''
+        函数为获取masks与imgs下的图片，进行自动提取并重命名
+        '''
         folder = [self.path+'/'+var for var in os.listdir(
             self.path) if ('mask' in var) or ('image' in var)]
         if not os.path.exists(self.save_path):
@@ -83,6 +92,7 @@ class BatchRenamePics(object):
                 name_list = [(root+'/'+file) for file in files]
                 for var in name_list:
                     ''' 
+                    其实可以改为var.rfind('/')找位置
                     var[len(self.path)+1:][::-1].replace('/','_',1)[::-1] 解释
                     >>> var
                     >>> /home/e201cv/Desktop/dataset/nCoVR/ct_lesion_seg/mask/19/84.png
@@ -94,6 +104,7 @@ class BatchRenamePics(object):
                     >>> gnp.48_91/ksam
                     >>> var[len(self.path)+1:][::-1].replace('/','_',1)[::-1]
                     >>> mask/19_84.png
+                    将其从子文件夹提取
                     '''
                     shutil.copyfile(
                         var, save_dir+'/'+var[len(type_img)+1:][::-1].replace('/', '_', 1)[::-1])

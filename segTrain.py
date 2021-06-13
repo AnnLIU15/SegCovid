@@ -16,6 +16,9 @@ from utils.Metrics import enhanced_mixing_loss
 
 
 def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v, weight, device, num_classes):
+    '''
+    mixed_loss=alpha*CrossEntropyLoss+(1-alpha)*dice_loss
+    '''
     loss0 = enhanced_mixing_loss(
         d0, labels_v, weight, device, alpha=0.5, n_classes=num_classes)
     loss1 = enhanced_mixing_loss(
@@ -35,19 +38,25 @@ def muti_c_dice_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v, weight, device
 
 
 def train(model, train_loader, optimizer, device, weight, num_classes):
+    '''
+    训练函数
+    '''
     epoch_loss = 0
     model.train()
     for idx, (imgs, masks) in tqdm(enumerate(train_loader), desc='Train', total=len(train_loader)):
         imgs, masks = imgs.to(device), masks.to(device)
         optimizer.zero_grad()
         d0, d1, d2, d3, d4, d5, d6 = model(imgs)
-        # print(one_hot_mask_.shape,masks.shape)
+
+        # 混合损失
         loss2, loss = muti_c_dice_loss_fusion(
             d0, d1, d2, d3, d4, d5, d6, masks, weight, device, num_classes)
         # if loss < 0:
         #     print(idx, loss)
         # print(idx,loss,output.shape,masks.shape)
+        # 反向传播获取梯度
         loss.backward()
+        # 优化
         optimizer.step()
         epoch_loss += loss.clone().detach().cpu().numpy()
         torch.cuda.empty_cache()
@@ -56,6 +65,9 @@ def train(model, train_loader, optimizer, device, weight, num_classes):
 
 
 def val(model, train_loader, device, weight, num_classes):
+    '''
+    测试函数
+    '''
     epoch_loss = 0
     model.eval()
     with torch.no_grad():
@@ -74,20 +86,26 @@ def val(model, train_loader, device, weight, num_classes):
 
 
 def main(args):
+    # 参数的复制
     device, lrate, num_classes, num_epochs, log_name, batch_size, weight, model_name =\
         args.device, args.lrate, args.num_classes, args.num_epochs, args.log_name, args.batch_size, args.weight, args.model_name
     pth, save_dir, save_every, start_epoch, train_data_dir, val_data_dir = \
         args.pth, args.save_dir, args.save_every, args.start_epoch, args.train_data_dir, args.val_data_dir
     normalize = args.normalize
+    
+
+    # pth文件保存，若要使用onnx请自加函数
     save_dir = save_dir+'/'+model_name
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    # 统计可使用GPU数目并显示
     ng = torch.cuda.device_count()
     print("Available cuda Devices:{}".format(ng))
     for i in range(ng):
         print('device%d:' % i, end='')
         print(torch.cuda.get_device_properties(i))
-
+    # 选择device
     if device == 'cuda':
         torch.cuda.set_device(0)
         if not torch.cuda.is_available():
@@ -95,10 +113,12 @@ def main(args):
             device = 'cpu'
     device = torch.device(device)
     print('===>device:', device)
+    # 确定随机数种子，保证实验可重复
     torch.cuda.manual_seed_all(0)
-
+    
+    
+    # 实例化model
     print('===>Setup Model')
-    # model = U_Net(in_channels=1, out_channels=num_classes).to(device)
     model = U2NET(in_channels=1, out_channels=num_classes).to(device)
     '''
     需要显示模型请把下一句取消注释
@@ -107,16 +127,15 @@ def main(args):
     # summary(model,(1, 512, 512))
 
     print('===>Setting optimizer and scheduler')
+    '''
+    optimizer->Adam优化器
+    scheduler->余弦退火调整
+    '''
     optimizer = optim.Adam(model.parameters(), lr=lrate, weight_decay=1e-3)
-    ''''''
-    # scheduler = optim.lr_scheduler.CosineAnnealingLR(
-    #    optimizer, T_max=10, eta_min=1e-5, last_epoch=-1)
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
         optimizer, T_0=10, eta_min=1e-6, last_epoch=-1, T_mult=2)
-    # logger
-    if not os.path.exists('./log/seg/'):
-        os.makedirs('./log/seg/')
-
+    
+    # 加载预训练模型
     if not pth == None:
         print('===>Loading Pretrained Model')
         checkpoint = torch.load(pth)
@@ -124,7 +143,11 @@ def main(args):
         optimizer.load_state_dict(checkpoint['optimizer'])
         scheduler.load_state_dict(checkpoint['scheduler'])
         start_epoch = checkpoint['epoch']+1
+    
+    # logger
     print('===>Making tensorboard log')
+    if not os.path.exists('./log/seg/'):
+        os.makedirs('./log/seg/')
     if log_name == None:
         writer = SummaryWriter(
             './log/seg/'+model_name+time.strftime('%m%d-%H%M', time.localtime(time.time())))
@@ -152,6 +175,7 @@ def main(args):
     best_val_performance = [0, np.Inf]
     train_start_time = time.time()
 
+    # begin training
     for epoch in range(start_epoch, start_epoch+num_epochs-1):
         epoch_begin_time = time.time()
         print("\n"+"="*20+"Epoch[{}:{}]".format(epoch, start_epoch+num_epochs)+"="*20 +
@@ -159,13 +183,18 @@ def main(args):
                                                 optimizer.state_dict()['param_groups'][0]['weight_decay']))
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
+        # train
         train_loss = train(
             model=model, train_loader=train_data_loader, optimizer=optimizer, device=device, weight=weight, num_classes=num_classes)
+        # val
         val_loss = val(
             model=model, train_loader=val_data_loader, device=device, weight=weight, num_classes=num_classes)
+        # change lrate
         scheduler.step()
         print('Epoch %d Train Loss:%.4f\t\t\tValidation Loss:%.4f' %
               (epoch, train_loss, val_loss))
+
+        # if satisfied the condition, save model 
         if best_train_performance[1] > train_loss and train_loss > 0 and epoch > 30:
             state = {'epoch': epoch, 'model_weights': model.state_dict(
             ), 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict()}
@@ -190,8 +219,8 @@ def main(args):
         print('Best val loss epoch:%d\t\t\tloss:%.4f' %
               (best_val_performance[0], best_val_performance[1]))
         '''
-        tensorboard visualize
-        ---------------------
+        tensorboard visualize args
+        --------------------------
         train_loss
         val_loss
         '''
@@ -206,5 +235,9 @@ def main(args):
 
 
 if __name__ == '__main__':
+    '''
+    本函数用于训练数据，详细参数请观看segConfig.py
+    '''
+    # 获取参数
     args = getConfig('train')
     main(args)

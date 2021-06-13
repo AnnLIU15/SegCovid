@@ -5,12 +5,18 @@ import numpy as np
 
 
 def torch2imgs(output):
+    '''
+    函数为将torch数据转为2维图片保存
+    '''
     shapeOFoutput = output.shape
     if len(shapeOFoutput) == 3 and shapeOFoutput[0] > 1:
+        # 将one-hot结果选取最大值
         imgs_array = output.argmax(dim=0).clone().detach().cpu().numpy()
     elif len(shapeOFoutput) == 3 and shapeOFoutput[0] == 1:
+        # 去掉无用维度
         imgs_array = output.clone().detach().cpu().numpy()
     elif len(shapeOFoutput) == 4:
+        # batchsize~=1，递归保存(反正不考虑效率)
         imgs_array = np.zeros(
             shape=(shapeOFoutput[0], shapeOFoutput[2], shapeOFoutput[3]))
         for idx in range(shapeOFoutput[0]):
@@ -21,11 +27,16 @@ def torch2imgs(output):
 
 
 def saveImage(imgs_array, name_of_imgs, save_dir='./output/segResult/', npy_type=False):
+    '''
+    使用OPENCV保存图片
+    '''
+    # 转为ndarray
     get_numpy = torch2imgs(imgs_array).astype(np.uint8)
 
     shapeofimg = get_numpy.shape
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
+    # 保存
     if len(shapeofimg) == 3:
         for idx in range(shapeofimg[0]):
             if isinstance(name_of_imgs[idx], tuple):

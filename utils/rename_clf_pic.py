@@ -2,13 +2,16 @@
 # @Author: Your name
 # @Date:   2020-12-08 23:48:30
 # @Last Modified by:   ZhaoYang
-# @Last Modified time: 2021-06-11 19:29:48
+# @Last Modified time: 2021-06-13 16:03:30
 
 import os
 
 
 class BatchRenamePics(object):
-
+    '''
+    批量重命名clf图片-> 种类_患者ID_扫描ID_slicerNum.png/jpg
+    种类 0->Normal 1->CP 2-NCP
+    '''
     def __init__(self, path):
         # 设置起始路径path
         self.path = path

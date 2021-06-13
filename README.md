@@ -20,6 +20,30 @@
 | **分割网络排行**                                             |
 | [Semantic Segmentation](https://paperswithcode.com/task/semantic-segmentation)<br>[Semantic Segmentation on Cityscapes val](https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=unet-a-nested-u-net-architecture-for-medical) |
 
+代码流程图
+
+```flow
+st=>start: start
+rs=>operation: utils/rename_seg_pic
+ps=>operation: utils/preprocessSeg
+tr=>operation: segTrain
+ts=>operation: segTest
+vl=>operation: plot_heatmap and visualizeSeg
+rc=>operation: utils/rename_clf_pic
+pc=>operation: utils/preprocessClf
+ic=>operation: infer or infer_multi_process
+rd=>operation: Radiomics/exact_radiomics
+e=>end: end
+
+st->rs->ps->tr->ts->vl->rc->pc->ic->rd->e
+```
+
+
+
+
+
+
+
 ### 1. 数据预处理
 
 **根据[test_split_segmentation.txt](./data/test_split_segmentation.txt)与[train_split_segmentation.txt](./data/train_split_segmentation.txt)将图片划分为训练集和测试集**
@@ -66,7 +90,7 @@ python segTrain_U2Net.py --model_name U2Net_n --num_classes 3 --normalize True -
 3-classes **Test**
 
 ```
- python segTest.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output1/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth
+ python segTest.py --model_name U2Net_n --num_classes 3 --normalize True --test_data_dir ./data/seg/process/test --pth output_zscore/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth
 ```
 
 2-classes **Train**
@@ -80,14 +104,14 @@ python segTrain.py --model_name U2Net_n_2c --num_classes 2 --normalize True --ba
 2-classes **Test**
 
 ```
- python segTest.py --model_name U2Net_n --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output1/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth
+ python segTest.py --model_name U2Net_n --num_classes 2 --normalize True --test_data_dir ./data/seg/process/test --pth output_zscore/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth
 ```
 
 #### 热力图(test中调用不方便)
 
 ```bash
-python plot_heatmap_2c.py --model_name U2Net_n --out_dir output/segResult/
-python plot_heatmap_3c.py --model_name U2Net_n --out_dir output/segResult/
+python plot_heatmap.py --model_name U2Net_n --out_dir output/segResult/ --num_classes 2
+python plot_heatmap.py --model_name U2Net_n --out_dir output/segResult/ --num_classes 3
 ```
 
 #### 可视化
@@ -107,7 +131,50 @@ pipreqs . --encoding=utf8 --force
 ```
 python Radiomics/exact_radiomics.py
 ```
+#### 性能指标
+
+| Name                            | mAP    | mPA    | IoU    | Mean Dice coff(mDC) | accurcy |
+| ------------------------------- | ------ | ------ | ------ | ------------------- | ------- |
+| Our(without z-score,3 classes)  | 0.6774 | 0.743  | 0.6346 | 0.7070              | 0.8932  |
+| Our(z-score,3 classes)          | 0.6906 | 0.7573 | 0.6514 | 0.7204              | 0.8941  |
+| Our(z-score,2 classes)          | _      | 0.8842 | _      | _                   | _       |
+| UNet(cell)[1]                   | _      | 0.652  | _      | 0.547               | _       |
+| DRUNet(cell)[1]                 | _      | 0.658  | _      | 0.562               | _       |
+| FCN(cell)[1]                    | _      | 0.637  | _      | 0.553               | _       |
+| SegNet(cell)[1]                 | _      | 0.610  | _      | 0.555               | _       |
+| DeepLabv3(cell)[1]              | _      | 0.662  | _      | 0.587               | _       |
+| Mask R-CNN(GGO+CO)[7]           | 0.5020 | _      | _      | _                   | _       |
+| Mask R-CNN(Lesion)[7]           | 0.6192 | _      | _      | _                   | _       |
+| Mask R-CNN*(z-score, Lesion)[7] | 0.6602 | _      | _      | _                   | _       |
+
+##### 3-class confusion matrix
+
+z-score
+
+| 0.998  | 0.200 | 0.077 |
+| ------ | ----- | ----- |
+| 0.002  | 0.747 | 0.154 |
+| 0.0003 | 0.053 | 0.767 |
+
+without z-score
+
+| 0.998  | 0.218 | 0.096 |
+| ------ | ----- | ----- |
+| 0.002  | 0.710 | 0.128 |
+| 0.0002 | 0.072 | 0.776 |
+
+##### 2-class confusion matrix (plot行列错误，但是数据是对的)
+
+| 0.996 | 0.115 |
+| ----- | ----- |
+| 0.003 | 0.885 |
+
+
+
+
+
 ### 3. 分类
+
 #### 预处理分类图片
 
 ```
@@ -116,7 +183,7 @@ python ./utils/preprocessClf.py --in_dir /home/e201cv/Desktop/covid_data/clf/tra
 
 #### 获取掩模
 ```
-python infer.py --infer_data_dirs /home/e201cv/Desktop/covid_data/process_clf/train /home/e201cv/Desktop/covid_data/process_clf/val /home/e201cv/Desktop/covid_data/process_clf/test --pth output1/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth --num_classes 3 --device cuda
+python infer.py --infer_data_dirs /home/e201cv/Desktop/covid_data/process_clf/train /home/e201cv/Desktop/covid_data/process_clf/val /home/e201cv/Desktop/covid_data/process_clf/test --pth output_zscore/saved_models/U2Net_n/1_20_20_2/bestSegZcore.pth --num_classes 3 --device cuda
 ```
 
 #### 获取影像组学

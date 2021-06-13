@@ -4,13 +4,13 @@ data/clf
 data/seg
 output/segResult
 output/radiomics
-output1/segResult
-output1/radiomics
+output_zscore/segResult
+output_zscore/radiomics
 *.pyc
 *.exe
 *.[ao]
 output/saved_models
-output1/saved_models
+output_zscore/saved_models
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

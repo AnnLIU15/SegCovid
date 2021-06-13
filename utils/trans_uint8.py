@@ -6,17 +6,22 @@ import numpy as np
 
 
 def imgs_uint8(data_path):
+    '''
+    将npy转为uint8格式，减少存储量
+    '''
     files = glob(data_path+'/*.npy')
     print('begin process ', data_path)
     for file in files:
         pic_ = np.load(file)
-
         pic_ = pic_.astype(np.uint8)
         np.save(file, pic_)
     print('end process ', data_path)
 
 
 def main(args):
+    '''
+    多线程转化
+    '''
     in_dir = args.in_dir
     if isinstance(in_dir, str):
         in_dir = [in_dir]
