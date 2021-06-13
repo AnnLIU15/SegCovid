@@ -1,5 +1,5 @@
 # 新冠肺炎切割
-
+**Verion1.0~3.0 Author: ZhaoY**
 ## 运行环境
 
 | Version  | v3.0    20210605             |
